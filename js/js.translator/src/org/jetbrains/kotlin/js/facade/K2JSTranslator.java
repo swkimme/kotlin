@@ -17,47 +17,24 @@
 package org.jetbrains.kotlin.js.facade;
 
 import com.google.common.base.Predicates;
-import com.google.dart.compiler.backend.js.ast.JsNode;
 import com.google.dart.compiler.backend.js.ast.JsProgram;
-import com.google.dart.compiler.util.TextOutputImpl;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.backend.common.output.OutputFileCollection;
-import org.jetbrains.kotlin.backend.common.output.SimpleOutputFile;
-import org.jetbrains.kotlin.backend.common.output.SimpleOutputFileCollection;
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor;
 import org.jetbrains.kotlin.js.analyze.TopDownAnalyzerFacadeForJS;
 import org.jetbrains.kotlin.js.analyzer.JsAnalysisResult;
 import org.jetbrains.kotlin.js.config.Config;
 import org.jetbrains.kotlin.js.facade.exceptions.TranslationException;
 import org.jetbrains.kotlin.js.inline.JsInliner;
-import org.jetbrains.kotlin.js.sourceMap.JsSourceGenerationVisitor;
-import org.jetbrains.kotlin.js.sourceMap.SourceMap3Builder;
-import org.jetbrains.kotlin.js.sourceMap.SourceMapBuilder;
 import org.jetbrains.kotlin.js.translate.context.TranslationContext;
 import org.jetbrains.kotlin.js.translate.general.Translation;
 import org.jetbrains.kotlin.psi.JetFile;
 import org.jetbrains.kotlin.resolve.BindingTrace;
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics;
-import org.jetbrains.kotlin.utils.fileUtils.FileUtilsPackage;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 
 import static org.jetbrains.kotlin.diagnostics.DiagnosticUtils.hasError;
-import static org.jetbrains.kotlin.js.facade.FacadeUtils.parseString;
-import static org.jetbrains.kotlin.psi.PsiPackage.JetPsiFactory;
 
 /**
  * An entry point of translator.
