@@ -1025,7 +1025,7 @@ public class Parser extends Observable {
     return pn;
   }
 
-  private Object primaryExpr(TokenStream ts) throws IOException,
+  public Object primaryExpr(TokenStream ts) throws IOException,
       JavaScriptException {
     int tt;
 

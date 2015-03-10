@@ -153,14 +153,10 @@ public final class CallExpressionTranslator extends AbstractCallExpressionTransl
         String jsCode = (String) constant.getValue();
         assert jsCode != null: jsCodeExpression.toString();
 
-        List<JsStatement> statements = new ArrayList<JsStatement>();
-
         try {
-            ParserPackage.parse(jsCode, ThrowExceptionOnErrorReporter.INSTANCE$, /* insideFunction= */ true);
+            return ParserPackage.parse(jsCode, ThrowExceptionOnErrorReporter.INSTANCE$, /* insideFunction= */ true);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        return statements;
     }
 }

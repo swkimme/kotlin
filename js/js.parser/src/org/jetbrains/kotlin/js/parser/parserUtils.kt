@@ -30,24 +30,70 @@ private val FAKE_SOURCE_INFO = SourceInfoImpl(null, 0, 0, 0, 0)
 throws(javaClass<IOException>())
 public fun parse(
         code: String,
-        errorReporter: ErrorReporter,
+        reporter: ErrorReporter,
         insideFunction: Boolean
-): List<JsStatement> {
-    val ts = TokenStream(StringReader(code, 0), "<parser>", FAKE_SOURCE_INFO.getLine())
-    val parser = Parser(IRFactory(ts), insideFunction)
-    Context.enter().setErrorReporter(errorReporter)
+): List<JsStatement> =
+        rhinoAst(code, 0, reporter, insideFunction) {
+            parse(it)
+        }.toJsAst { node ->
+            val statements = arrayListOf<JsStatement>()
+            mapStatements(statements, node)
+            statements
+        }
 
-    val statements = arrayListOf<JsStatement>()
+throws(javaClass<IOException>())
+public fun parseFunction(
+        code: String,
+        offset: Long,
+        reporter: ErrorReporter
+): JsFunction =
+        rhinoAst(code, offset, reporter, insideFunction = false) {
+            addObserver(FunctionParsingObserver())
+            primaryExpr(it)
+        }.toJsAst { node ->
+            mapFunction(node)
+        }
+
+private class FunctionParsingObserver : Observer {
+    var functionsStarted = 0
+
+    override fun update(o: Observable?, arg: Any?): Unit =
+            when (arg) {
+                is ParserEvents.OnFunctionParsingStart -> {
+                    functionsStarted++
+                }
+                is ParserEvents.OnFunctionParsingEnd -> {
+                    functionsStarted--
+
+                    if (functionsStarted == 0) {
+                        arg.tokenStream.ungetToken(TokenStream.EOF)
+                    }
+                }
+            }
+}
+
+inline
+private fun rhinoAst(
+        code: String,
+        offset: Long,
+        reporter: ErrorReporter,
+        insideFunction: Boolean,
+        parseAction: Parser.(TokenStream)->Any
+): Node {
+    Context.enter().setErrorReporter(reporter)
 
     try {
-        val topNode = parser.parse(ts) as Node
-        JsAstMapper(RootScope()).mapStatements(statements, topNode)
+        val ts = TokenStream(StringReader(code, offset), "<parser>", FAKE_SOURCE_INFO.getLine())
+        val parser = Parser(IRFactory(ts), insideFunction)
+        return parser.parseAction(ts) as Node
     } finally {
         Context.exit()
     }
-
-    return statements
 }
+
+inline
+private fun Node.toJsAst<T>(mapAction: JsAstMapper.(Node)->T): T =
+        JsAstMapper(RootScope()).mapAction(this)
 
 private fun StringReader(string: String, offset: Long): Reader {
     val reader = StringReader(string)

@@ -554,8 +554,9 @@ public class JsAstMapper {
         }
     }
 
-    private JsExpression mapFunction(Node fnNode) throws JsParserException {
-
+    public JsFunction mapFunction(Node fnNode) throws JsParserException {
+        int nodeType = fnNode.getType();
+        assert nodeType == TokenStream.FUNCTION: "Expected function node, got: " + TokenStream.tokenToName(nodeType);
         Node fromFnNameNode = fnNode.getFirstChild();
         Node fromParamNode = fnNode.getFirstChild().getNext().getFirstChild();
         Node fromBodyNode = fnNode.getFirstChild().getNext().getNext();
