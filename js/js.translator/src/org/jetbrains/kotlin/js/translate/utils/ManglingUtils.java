@@ -57,6 +57,21 @@ public class ManglingUtils {
     }
 
     @NotNull
+    public static String getMangledFqName(@NotNull CallableDescriptor descriptor) {
+        String fqName = getFqName(descriptor).asString();
+
+        if (descriptor instanceof CallableMemberDescriptor) {
+            CallableMemberDescriptor memberDescriptor = (CallableMemberDescriptor) descriptor;
+
+            if (needsStableMangling(memberDescriptor)) {
+                return getStableMangledName(fqName, getArgumentTypesAsString(descriptor));
+            }
+        }
+
+        return fqName;
+    }
+
+    @NotNull
     private static String getMangledName(@NotNull CallableMemberDescriptor descriptor) {
         if (needsStableMangling(descriptor)) {
             return getStableMangledName(descriptor);

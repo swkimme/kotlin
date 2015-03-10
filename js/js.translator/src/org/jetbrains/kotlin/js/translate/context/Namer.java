@@ -30,9 +30,8 @@ import java.util.Arrays;
 
 import static com.google.dart.compiler.backend.js.ast.AstPackage.JsObjectScope;
 import static org.jetbrains.kotlin.js.translate.utils.JsDescriptorUtils.getModuleName;
+import static org.jetbrains.kotlin.js.translate.utils.ManglingUtils.getMangledFqName;
 import static org.jetbrains.kotlin.js.translate.utils.ManglingUtils.getStableMangledNameForDescriptor;
-import static org.jetbrains.kotlin.js.translate.utils.ManglingUtils.getSuggestedName;
-import static org.jetbrains.kotlin.resolve.DescriptorUtils.getFqNameSafe;
 
 /**
  * Encapsulates different types of constants and naming conventions.
@@ -107,10 +106,9 @@ public final class Namer {
 
     @NotNull
     public static String getFunctionTag(@NotNull CallableDescriptor functionDescriptor) {
-        FqName fqName = getFqNameSafe(functionDescriptor);
-        String mangledName = getSuggestedName(functionDescriptor);
+        String mangledName = getMangledFqName(functionDescriptor);
         String moduleName = getModuleName(functionDescriptor);
-        return StringUtil.join(Arrays.asList(moduleName, fqName, mangledName), ".");
+        return StringUtil.join(Arrays.asList(moduleName, mangledName), ".");
     }
 
     @NotNull
