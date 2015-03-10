@@ -1,0 +1,3 @@
+ERROR: compiler/testData/cli/js/recursiveInlineError.kt: (2, 18) Inline function is called recursively
+ERROR: compiler/testData/cli/js/recursiveInlineError.kt: (6, 18) Inline function is called recursively
+COMPILATION_ERROR
