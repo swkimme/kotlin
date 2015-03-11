@@ -896,7 +896,7 @@ public class JsAstMapper {
         }
     }
 
-    public void mapStatements(List<JsStatement> stmts, Node nodeStmts)
+    private void mapStatements(List<JsStatement> stmts, Node nodeStmts)
             throws JsParserException {
         Node curr = nodeStmts.getFirstChild();
         while (curr != null) {
@@ -912,7 +912,7 @@ public class JsAstMapper {
         }
     }
 
-    private List<JsStatement> mapStatements(Node nodeStmts)
+    public List<JsStatement> mapStatements(Node nodeStmts)
             throws JsParserException {
         List<JsStatement> stmts = new ArrayList<JsStatement>();
         mapStatements(stmts, nodeStmts);
