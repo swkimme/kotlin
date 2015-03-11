@@ -27,30 +27,14 @@ import java.util.*
 
 private val FAKE_SOURCE_INFO = SourceInfoImpl(null, 0, 0, 0, 0)
 
-public fun parse(
-        code: String,
-        reporter: ErrorReporter,
-        insideFunction: Boolean
-): List<JsStatement> =
-        rhinoAst(code, 0, reporter, insideFunction) {
-            parse(it)
-        }.toJsAst { node ->
-            val statements = arrayListOf<JsStatement>()
-            mapStatements(statements, node)
-            statements
-        }
+public fun parse(code: String, reporter: ErrorReporter, insideFunction: Boolean): List<JsStatement> =
+        parse(code, 0, reporter, insideFunction, Parser::parse).toJsAst(JsAstMapper::mapStatements)
 
-public fun parseFunction(
-        code: String,
-        offset: Long,
-        reporter: ErrorReporter
-): JsFunction =
-        rhinoAst(code, offset, reporter, insideFunction = false) {
+public fun parseFunction(code: String, offset: Int, reporter: ErrorReporter): JsFunction =
+        parse(code, offset, reporter, insideFunction = false) {
             addObserver(FunctionParsingObserver())
             primaryExpr(it)
-        }.toJsAst { node ->
-            mapFunction(node)
-        }
+        }.toJsAst(JsAstMapper::mapFunction)
 
 private class FunctionParsingObserver : Observer {
     var functionsStarted = 0
@@ -71,9 +55,9 @@ private class FunctionParsingObserver : Observer {
 }
 
 inline
-private fun rhinoAst(
+private fun parse(
         code: String,
-        offset: Long,
+        offset: Int,
         reporter: ErrorReporter,
         insideFunction: Boolean,
         parseAction: Parser.(TokenStream)->Any
@@ -93,9 +77,9 @@ inline
 private fun Node.toJsAst<T>(mapAction: JsAstMapper.(Node)->T): T =
         JsAstMapper(RootScope()).mapAction(this)
 
-private fun StringReader(string: String, offset: Long): Reader {
+private fun StringReader(string: String, offset: Int): Reader {
     val reader = StringReader(string)
-    reader.skip(offset)
+    reader.skip(offset.toLong())
     return reader
 }
 
