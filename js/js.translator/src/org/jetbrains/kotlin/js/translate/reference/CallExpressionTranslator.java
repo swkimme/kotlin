@@ -152,11 +152,6 @@ public final class CallExpressionTranslator extends AbstractCallExpressionTransl
         assert constant != null: "jsCode must be compile time string " + jsCodeExpression;
         String jsCode = (String) constant.getValue();
         assert jsCode != null: jsCodeExpression.toString();
-
-        try {
-            return ParserPackage.parse(jsCode, ThrowExceptionOnErrorReporter.INSTANCE$, /* insideFunction= */ true);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return ParserPackage.parse(jsCode, ThrowExceptionOnErrorReporter.INSTANCE$, /* insideFunction= */ true);
     }
 }

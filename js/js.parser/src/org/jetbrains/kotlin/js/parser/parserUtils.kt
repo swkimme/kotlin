@@ -27,7 +27,6 @@ import java.util.*
 
 private val FAKE_SOURCE_INFO = SourceInfoImpl(null, 0, 0, 0, 0)
 
-throws(javaClass<IOException>())
 public fun parse(
         code: String,
         reporter: ErrorReporter,
@@ -41,7 +40,6 @@ public fun parse(
             statements
         }
 
-throws(javaClass<IOException>())
 public fun parseFunction(
         code: String,
         offset: Long,
