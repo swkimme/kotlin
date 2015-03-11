@@ -40,6 +40,7 @@ public interface ErrorsJs {
     DiagnosticFactory1<JetExpression, JsCallData> JSCODE_ERROR = DiagnosticFactory1.create(ERROR, JsCodePositioningStrategy.INSTANCE$);
     DiagnosticFactory1<JetExpression, JsCallData> JSCODE_WARNING = DiagnosticFactory1.create(WARNING, JsCodePositioningStrategy.INSTANCE$);
     DiagnosticFactory0<JetExpression> JSCODE_ARGUMENT_SHOULD_BE_CONSTANT = DiagnosticFactory0.create(ERROR, DEFAULT);
+    DiagnosticFactory0<JetExpression> JSCODE_NO_JAVASCRIPT_PRODUCED = DiagnosticFactory0.create(ERROR, DEFAULT);
     DiagnosticFactory0<PsiElement> RECURSIVE_CALL_TO_INLINE_FUNCTION = DiagnosticFactory0.create(ERROR, DEFAULT);
 
     @SuppressWarnings("UnusedDeclaration")
