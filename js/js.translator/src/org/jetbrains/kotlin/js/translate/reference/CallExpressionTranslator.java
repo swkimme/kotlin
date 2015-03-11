@@ -32,17 +32,14 @@ import org.jetbrains.kotlin.psi.JetStringTemplateExpression;
 import org.jetbrains.kotlin.psi.ValueArgument;
 import org.jetbrains.kotlin.resolve.BindingTrace;
 import org.jetbrains.kotlin.resolve.TemporaryBindingTrace;
-import org.jetbrains.kotlin.resolve.calls.callUtil.CallUtilPackage;
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall;
-import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall;
 import org.jetbrains.kotlin.resolve.constants.CompileTimeConstant;
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator;
 import org.jetbrains.kotlin.types.JetType;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
+import static org.jetbrains.kotlin.js.translate.utils.PsiUtils.getFunctionDescriptor;
 import static org.jetbrains.kotlin.js.translate.utils.UtilsPackage.setInlineCallMetadata;
 import static org.jetbrains.kotlin.resolve.calls.callUtil.CallUtilPackage.getFunctionResolvedCallWithAssert;
 import static org.jetbrains.kotlin.js.resolve.diagnostics.JsCallChecker.isJsCall;
@@ -62,10 +59,9 @@ public final class CallExpressionTranslator extends AbstractCallExpressionTransl
         }
         
         JsExpression callExpression = (new CallExpressionTranslator(expression, receiver, context)).translate();
-        CallableDescriptor descriptor = getFunctionDescriptor(expression, context);
 
         if (!resolvedCall.isSafeCall() && shouldBeInlined(expression, context)) {
-            setInlineCallMetadata(callExpression, descriptor, context);
+            setInlineCallMetadata(callExpression, expression, context);
         }
 
         return callExpression;
@@ -90,21 +86,6 @@ public final class CallExpressionTranslator extends AbstractCallExpressionTransl
         }
 
         return false;
-    }
-
-    @NotNull
-    private static CallableDescriptor getFunctionDescriptor(
-            @NotNull JetCallExpression expression,
-            @NotNull TranslationContext context
-    ) {
-        ResolvedCall<?> resolvedCall = CallUtilPackage.getResolvedCall(expression, context.bindingContext());
-        assert resolvedCall != null;
-
-        if (resolvedCall instanceof VariableAsFunctionResolvedCall) {
-            return  ((VariableAsFunctionResolvedCall) resolvedCall).getVariableCall().getCandidateDescriptor();
-        }
-
-        return resolvedCall.getCandidateDescriptor();
     }
 
     private CallExpressionTranslator(
