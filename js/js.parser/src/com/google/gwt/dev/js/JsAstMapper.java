@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Parses JavaScript source.
- */
 public class JsAstMapper {
 
     private final JsProgram program;
