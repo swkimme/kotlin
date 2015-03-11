@@ -117,22 +117,17 @@ public class FunctionReader(private val context: TranslationContext) {
     }
 
     private fun readFunctionFromSource(descriptor: CallableDescriptor, source: String): JsFunction? {
-        val startTag = Namer.getFunctionTag(descriptor)
+        val tag = Namer.getFunctionTag(descriptor)
+        val index = source.indexOf(tag)
+        if (index < 0) return null
 
-        val startIndex = source.indexOf(startTag)
-        if (startIndex < 0) return null
-
-        var offset = startIndex + startTag.length() + 1 // + 1 for closing quote
+        // + 1 for closing quote
+        var offset = index + tag.length() + 1
         while (offset < source.length() && source.charAt(offset).isWhitespaceOrComma) {
             offset++
         }
 
-        val function = try {
-                parseFunction(source, offset.toLong(), ThrowExceptionOnErrorReporter)
-            } catch (e: Exception) {
-                throw RuntimeException(e)
-            }
-
+        val function = parseFunction(source, offset, ThrowExceptionOnErrorReporter)
         val moduleName = getExternalModuleName(descriptor)!!
         val moduleNameLiteral = context.program().getStringLiteral(moduleName)
         val moduleReference =  context.namer().getModuleReference(moduleNameLiteral)
