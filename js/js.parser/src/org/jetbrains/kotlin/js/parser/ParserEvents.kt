@@ -19,7 +19,6 @@ package org.jetbrains.kotlin.js.parser
 import com.google.gwt.dev.js.rhino.*
 
 public object ParserEvents {
-    private trait Base
 
     public class OnFunctionParsingStart
 
