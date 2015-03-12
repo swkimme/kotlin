@@ -35,7 +35,7 @@ private val DIAGNOSTIC_FACTORY_TO_RENDERER by Delegates.lazy {
         put(ErrorsJs.JSCODE_WARNING, "JavaScript: {0}", JsCallDataTextRenderer)
         put(ErrorsJs.JSCODE_ARGUMENT_SHOULD_BE_CONSTANT, "Argument must be string constant")
         put(ErrorsJs.JSCODE_NO_JAVASCRIPT_PRODUCED, "Argument must be non-empty JavaScript code")
-        put(ErrorsJs.RECURSIVE_CALL_TO_INLINE_FUNCTION, "Inline function is called recursively")
+        put(ErrorsJs.INLINE_CALL_CYCLE, "Inline calls form cycle")
 
         this
     }
