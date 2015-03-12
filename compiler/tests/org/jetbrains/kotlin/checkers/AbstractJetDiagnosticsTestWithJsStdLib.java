@@ -26,8 +26,11 @@ import org.jetbrains.kotlin.context.GlobalContext;
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor;
 import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl;
 import org.jetbrains.kotlin.js.analyze.TopDownAnalyzerFacadeForJS;
+import org.jetbrains.kotlin.js.analyzer.JsAnalysisResult;
 import org.jetbrains.kotlin.js.config.EcmaVersion;
 import org.jetbrains.kotlin.js.config.LibrarySourcesConfigWithCaching;
+import org.jetbrains.kotlin.js.facade.K2JSTranslator;
+import org.jetbrains.kotlin.js.facade.MainCallParameters;
 import org.jetbrains.kotlin.psi.JetFile;
 import org.jetbrains.kotlin.resolve.BindingContext;
 import org.jetbrains.kotlin.resolve.BindingTrace;
@@ -67,8 +70,14 @@ public abstract class AbstractJetDiagnosticsTestWithJsStdLib extends AbstractJet
     ) {
         BindingContext libraryContext = config.getLibraryContext();
         DelegatingBindingTrace trace = new DelegatingBindingTrace(libraryContext, "trace with preanalyzed library");
+        JsAnalysisResult analysisResult = TopDownAnalyzerFacadeForJS.analyzeFilesWithGivenTrace(jetFiles, moduleTrace, module, config);
+        K2JSTranslator translator = new K2JSTranslator(config);
 
-        TopDownAnalyzerFacadeForJS.analyzeFilesWithGivenTrace(jetFiles, moduleTrace, module, config);
+        try {
+            translator.translate(jetFiles, MainCallParameters.noCall(), analysisResult);
+        } catch (Exception e) {
+            // ignore backend exceptions
+        }
 
         trace.addAllMyDataTo(moduleTrace);
     }
