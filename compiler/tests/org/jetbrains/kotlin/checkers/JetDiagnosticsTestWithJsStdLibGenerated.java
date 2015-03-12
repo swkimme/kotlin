@@ -32,6 +32,7 @@ import java.util.regex.Pattern;
 @TestDataPath("$PROJECT_ROOT")
 @InnerTestClasses({
         JetDiagnosticsTestWithJsStdLibGenerated.DynamicTypes.class,
+        JetDiagnosticsTestWithJsStdLibGenerated.Inline.class,
         JetDiagnosticsTestWithJsStdLibGenerated.JsCode.class,
         JetDiagnosticsTestWithJsStdLibGenerated.Native.class,
 })
@@ -232,6 +233,33 @@ public class JetDiagnosticsTestWithJsStdLibGenerated extends AbstractJetDiagnost
         @TestMetadata("varargs.kt")
         public void testVarargs() throws Exception {
             String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithJsStdLib/dynamicTypes/varargs.kt");
+            doTest(fileName);
+        }
+    }
+
+    @TestMetadata("compiler/testData/diagnostics/testsWithJsStdLib/inline")
+    @TestDataPath("$PROJECT_ROOT")
+    @RunWith(JUnit3RunnerWithInners.class)
+    public static class Inline extends AbstractJetDiagnosticsTestWithJsStdLib {
+        public void testAllFilesPresentInInline() throws Exception {
+            JetTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/diagnostics/testsWithJsStdLib/inline"), Pattern.compile("^(.+)\\.kt$"), true);
+        }
+
+        @TestMetadata("recursionCycle.kt")
+        public void testRecursionCycle() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithJsStdLib/inline/recursionCycle.kt");
+            doTest(fileName);
+        }
+
+        @TestMetadata("recursionCycleLambda.kt")
+        public void testRecursionCycleLambda() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithJsStdLib/inline/recursionCycleLambda.kt");
+            doTest(fileName);
+        }
+
+        @TestMetadata("recursionCycleWithPublicFun.kt")
+        public void testRecursionCycleWithPublicFun() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithJsStdLib/inline/recursionCycleWithPublicFun.kt");
             doTest(fileName);
         }
     }

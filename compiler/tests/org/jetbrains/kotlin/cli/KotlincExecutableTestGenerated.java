@@ -207,12 +207,6 @@ public class KotlincExecutableTestGenerated extends AbstractKotlincExecutableTes
             doJsTest(fileName);
         }
 
-        @TestMetadata("recursiveInlineError.args")
-        public void testRecursiveInlineError() throws Exception {
-            String fileName = JetTestUtils.navigationMetadata("compiler/testData/cli/js/recursiveInlineError.args");
-            doJsTest(fileName);
-        }
-
         @TestMetadata("simple2js.args")
         public void testSimple2js() throws Exception {
             String fileName = JetTestUtils.navigationMetadata("compiler/testData/cli/js/simple2js.args");
