@@ -27,14 +27,22 @@ import java.util.*
 
 private val FAKE_SOURCE_INFO = SourceInfoImpl(null, 0, 0, 0, 0)
 
-public fun parse(code: String, reporter: ErrorReporter, insideFunction: Boolean): List<JsStatement> =
-        parse(code, 0, reporter, insideFunction, Parser::parse).toJsAst(JsAstMapper::mapStatements)
+public fun parse(code: String, reporter: ErrorReporter, insideFunction: Boolean): List<JsStatement> {
+        val node = parse(code, 0, reporter, insideFunction, Parser::parse)
+        var scope = RootScope()
+
+        if (insideFunction) {
+            scope = JsFunctionScope(scope, "<function scope for parser>")
+        }
+
+        return node.toJsAst(scope, JsAstMapper::mapStatements)
+}
 
 public fun parseFunction(code: String, offset: Int, reporter: ErrorReporter): JsFunction =
         parse(code, offset, reporter, insideFunction = false) {
             addObserver(FunctionParsingObserver())
             primaryExpr(it)
-        }.toJsAst(JsAstMapper::mapFunction)
+        }.toJsAst(RootScope(), JsAstMapper::mapFunction)
 
 private class FunctionParsingObserver : Observer {
     var functionsStarted = 0
@@ -74,8 +82,8 @@ private fun parse(
 }
 
 inline
-private fun Node.toJsAst<T>(mapAction: JsAstMapper.(Node)->T): T =
-        JsAstMapper(RootScope()).mapAction(this)
+private fun Node.toJsAst<T>(scope: JsScope, mapAction: JsAstMapper.(Node)->T): T =
+        JsAstMapper(scope).mapAction(this)
 
 private fun StringReader(string: String, offset: Int): Reader {
     val reader = StringReader(string)
