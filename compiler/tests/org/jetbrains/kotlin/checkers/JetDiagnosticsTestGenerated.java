@@ -53,6 +53,7 @@ public class JetDiagnosticsTestGenerated extends AbstractJetDiagnosticsTest {
             Tests.DelegatedProperty.class,
             Tests.Delegation.class,
             Tests.Deparenthesize.class,
+            Tests.Deprecated.class,
             Tests.DuplicateJvmSignature.class,
             Tests.DynamicTypes.class,
             Tests.Enum.class,
@@ -3581,6 +3582,39 @@ public class JetDiagnosticsTestGenerated extends AbstractJetDiagnosticsTest {
             @TestMetadata("ParenthesizedVariable.kt")
             public void testParenthesizedVariable() throws Exception {
                 String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/deparenthesize/ParenthesizedVariable.kt");
+                doTest(fileName);
+            }
+        }
+
+        @TestMetadata("compiler/testData/diagnostics/tests/deprecated")
+        @TestDataPath("$PROJECT_ROOT")
+        @RunWith(JUnit3RunnerWithInners.class)
+        public static class Deprecated extends AbstractJetDiagnosticsTest {
+            public void testAllFilesPresentInDeprecated() throws Exception {
+                JetTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/diagnostics/tests/deprecated"), Pattern.compile("^(.+)\\.kt$"), true);
+            }
+
+            @TestMetadata("annotationUsage.kt")
+            public void testAnnotationUsage() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/deprecated/annotationUsage.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("functionUsage.kt")
+            public void testFunctionUsage() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/deprecated/functionUsage.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("propertyUsage.kt")
+            public void testPropertyUsage() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/deprecated/propertyUsage.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("typeUsage.kt")
+            public void testTypeUsage() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/deprecated/typeUsage.kt");
                 doTest(fileName);
             }
         }

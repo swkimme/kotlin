@@ -125,6 +125,11 @@ public class TypeResolver(
 
                 c.trace.record(BindingContext.REFERENCE_TARGET, referenceExpression, classifierDescriptor)
 
+                val deprecated = classifierDescriptor.getDeprecatedAnnotation()
+                if (deprecated != null) {
+                    c.trace.report(createDeprecationDiagnostic(referenceExpression, deprecated))
+                }
+
                 when (classifierDescriptor) {
                     is TypeParameterDescriptor -> {
 

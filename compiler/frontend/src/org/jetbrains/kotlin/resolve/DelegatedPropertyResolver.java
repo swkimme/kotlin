@@ -17,6 +17,7 @@
 package org.jetbrains.kotlin.resolve;
 
 import com.google.common.collect.Lists;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns;
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.diagnostics.rendering.Renderers;
 import org.jetbrains.kotlin.name.Name;
 import org.jetbrains.kotlin.psi.*;
 import org.jetbrains.kotlin.resolve.calls.CallResolver;
+import org.jetbrains.kotlin.resolve.calls.checkers.DeprecatedUsageChecker;
 import org.jetbrains.kotlin.resolve.calls.inference.ConstraintSystem;
 import org.jetbrains.kotlin.resolve.calls.inference.ConstraintSystemCompleter;
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall;
@@ -208,7 +210,15 @@ public class DelegatedPropertyResolver {
             return;
         }
 
-        trace.record(DELEGATED_PROPERTY_RESOLVED_CALL, accessor, functionResults.getResultingCall());
+        ResolvedCall<FunctionDescriptor> resultingCall = functionResults.getResultingCall();
+        PsiElement declaration = DescriptorToSourceUtils.descriptorToDeclaration(propertyDescriptor);
+        if (declaration instanceof JetProperty) {
+            JetProperty property = (JetProperty) declaration;
+            JetPropertyDelegate delegate = property.getDelegate();
+            if (delegate != null)
+                DeprecatedUsageChecker.check(resultingCall, trace, delegate.getByKeywordNode().getPsi());
+        }
+        trace.record(DELEGATED_PROPERTY_RESOLVED_CALL, accessor, resultingCall);
     }
 
     /* Resolve get() or set() methods from delegate */
