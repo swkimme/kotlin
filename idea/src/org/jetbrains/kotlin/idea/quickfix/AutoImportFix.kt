@@ -141,7 +141,14 @@ public class AutoImportFix(element: JetSimpleNameExpression) : JetHintAction<Jet
         val indicesHelper = KotlinIndicesHelper(file.getProject(), resolutionFacade, bindingContext, searchScope, moduleDescriptor, ::isVisible)
 
         if (!element.isImportDirectiveExpression() && !JetPsiUtil.isSelectorInQualified(element)) {
-            getClasses(referenceName, file, searchScope).filterTo(result, ::isVisible)
+            val classes =
+                if (ProjectStructureUtil.isJsKotlinModule(file)) {
+                    indicesHelper.getClassDescriptors({ it == referenceName }, { true })
+                }
+                else {
+                    getClasses(referenceName, file, searchScope)
+                }
+            classes.filterTo(result, ::isVisible)
             result.addAll(indicesHelper.getTopLevelCallablesByName(referenceName))
         }
 
