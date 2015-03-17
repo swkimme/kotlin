@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.resolve
 
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.psi.*
@@ -125,9 +126,18 @@ public class TypeResolver(
 
                 c.trace.record(BindingContext.REFERENCE_TARGET, referenceExpression, classifierDescriptor)
 
-                val deprecated = classifierDescriptor.getDeprecatedAnnotation()
-                if (deprecated != null) {
-                    c.trace.report(createDeprecationDiagnostic(referenceExpression, deprecated))
+                // Do not check types in annotation entries to prevent cycles in resolve, rely on call message
+                val annotationEntry = PsiTreeUtil.getParentOfType(typeElement, javaClass<JetAnnotationEntry>())
+                if (annotationEntry == null || annotationEntry.getTypeReference()?.getTypeElement() != typeElement) {
+
+                    // Do not check types in calls to super constructor in extends list, rely on call message
+                    val superExpression = PsiTreeUtil.getParentOfType(typeElement, javaClass<JetDelegatorToSuperCall>())
+                    if (superExpression == null || superExpression.getTypeReference()?.getTypeElement() != typeElement) {
+                        val deprecated = classifierDescriptor.getDeprecatedAnnotation()
+                        if (deprecated != null) {
+                            c.trace.report(createDeprecationDiagnostic(referenceExpression, deprecated))
+                        }
+                    }
                 }
 
                 when (classifierDescriptor) {

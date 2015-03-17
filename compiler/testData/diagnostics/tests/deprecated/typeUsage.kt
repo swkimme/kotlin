@@ -10,7 +10,9 @@ open class Obsolete2 [deprecated("Constructor")]() {
 
 trait Generic<T>
 
-class Derived : <!DEPRECATED_SYMBOL_WITH_MESSAGE!>Obsolete<!>()
+open class Derived() : <!DEPRECATED_SYMBOL_WITH_MESSAGE!>Obsolete<!>()
+
+class Derived2() : Derived()
 
 class TypeParam : Generic<<!DEPRECATED_SYMBOL_WITH_MESSAGE!>Obsolete<!>>
 
