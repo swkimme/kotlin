@@ -27,7 +27,9 @@ import org.jetbrains.kotlin.lexer.JetTokens;
 import org.jetbrains.kotlin.psi.*;
 import org.jetbrains.kotlin.resolve.BindingContext;
 import org.jetbrains.kotlin.resolve.DescriptorUtils;
+import org.jetbrains.kotlin.resolve.ResolvePackage;
 import org.jetbrains.kotlin.resolve.calls.callUtil.CallUtilPackage;
+import org.jetbrains.kotlin.resolve.calls.checkers.DeprecatedUsageChecker;
 import org.jetbrains.kotlin.resolve.calls.context.BasicCallResolutionContext;
 import org.jetbrains.kotlin.resolve.calls.context.CheckValueArgumentsMode;
 import org.jetbrains.kotlin.resolve.calls.context.ResolutionContext;
@@ -131,7 +133,8 @@ public class CallExpressionResolver {
 
         TemporaryTraceAndCache temporaryForVariable = TemporaryTraceAndCache.create(
                 context, "trace to resolve as variable", nameExpression);
-        JetType type = getVariableType(nameExpression, receiver, callOperationNode, context.replaceTraceAndCache(temporaryForVariable), result);
+        JetType type = getVariableType(nameExpression, receiver, callOperationNode, context.replaceTraceAndCache(temporaryForVariable),
+                                       result);
         if (result[0]) {
             temporaryForVariable.commit();
             return JetTypeInfo.create(type, context.dataFlowInfo);
@@ -333,10 +336,27 @@ public class CallExpressionResolver {
         Qualifier expressionQualifier = context.trace.get(BindingContext.QUALIFIER, expression);
         Qualifier receiverQualifier = context.trace.get(BindingContext.QUALIFIER, expression.getReceiverExpression());
 
-        if (receiverQualifier == null && expressionQualifier != null) {
-            assert expressionQualifier.getClassifier() instanceof ClassDescriptor :
-                    "Only class can (package cannot) be accessed by instance reference: " + expressionQualifier;
-            context.trace.report(NESTED_CLASS_ACCESSED_VIA_INSTANCE_REFERENCE.on(selectorExpression, (ClassDescriptor)expressionQualifier.getClassifier()));
+        JetExpression receiverExpression = expression.getReceiverExpression();
+        if (receiverExpression instanceof JetReferenceExpression) {
+            DeclarationDescriptor targetDescriptor =
+                    context.trace.get(BindingContext.REFERENCE_TARGET, (JetReferenceExpression) receiverExpression);
+            if (targetDescriptor != null) {
+                ResolvePackage.checkDeprecatedDescriptor(targetDescriptor, context.trace, receiverExpression);
+            }
+        }
+
+        if (expressionQualifier != null) {
+            ClassifierDescriptor classifierDescriptor = expressionQualifier.getClassifier();
+            if (classifierDescriptor != null) {
+                ResolvePackage.checkDeprecatedDescriptor(classifierDescriptor, context.trace, selectorExpression);
+            }
+            if (receiverQualifier == null) {
+                assert classifierDescriptor instanceof ClassDescriptor :
+                        "Only class can (package cannot) be accessed by instance reference: " + expressionQualifier;
+
+                context.trace.report(NESTED_CLASS_ACCESSED_VIA_INSTANCE_REFERENCE
+                                             .on(selectorExpression, (ClassDescriptor) classifierDescriptor));
+            }
         }
     }
 }

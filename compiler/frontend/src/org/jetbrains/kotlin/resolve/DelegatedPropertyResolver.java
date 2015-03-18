@@ -216,7 +216,7 @@ public class DelegatedPropertyResolver {
             JetProperty property = (JetProperty) declaration;
             JetPropertyDelegate delegate = property.getDelegate();
             if (delegate != null)
-                DeprecatedUsageChecker.check(resultingCall, trace, delegate.getByKeywordNode().getPsi());
+                ResolvePackage.checkDeprecatedCall(resultingCall, trace, delegate.getByKeywordNode().getPsi());
         }
         trace.record(DELEGATED_PROPERTY_RESOLVED_CALL, accessor, resultingCall);
     }

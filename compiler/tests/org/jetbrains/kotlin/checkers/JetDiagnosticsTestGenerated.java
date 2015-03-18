@@ -3606,6 +3606,12 @@ public class JetDiagnosticsTestGenerated extends AbstractJetDiagnosticsTest {
                 doTest(fileName);
             }
 
+            @TestMetadata("nestedTypesUsage.kt")
+            public void testNestedTypesUsage() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/deprecated/nestedTypesUsage.kt");
+                doTest(fileName);
+            }
+
             @TestMetadata("objectUsage.kt")
             public void testObjectUsage() throws Exception {
                 String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/deprecated/objectUsage.kt");
