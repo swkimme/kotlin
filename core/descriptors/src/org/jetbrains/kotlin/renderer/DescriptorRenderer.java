@@ -55,6 +55,7 @@ public interface DescriptorRenderer extends Renderer<DeclarationDescriptor> {
             .setReceiverAfterName(true)
             .setRenderCompanionObjectName(true)
             .setWithoutSuperTypes(true)
+            .setRenderDefaultValues(false)
             .setStartFromName(true).build();
 
     DescriptorRenderer FQ_NAMES_IN_TYPES = new DescriptorRendererBuilder().build();

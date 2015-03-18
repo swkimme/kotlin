@@ -25,7 +25,7 @@ public class DeprecatedUsageChecker : CallChecker {
                 val call = resolvedCall.getCall()
                 val reportElement = element ?: call.getCalleeExpression()
                 if (reportElement != null) {
-                    trace.report(createDeprecationDiagnostic(reportElement, deprecated))
+                    trace.report(createDeprecationDiagnostic(reportElement, targetDescriptor, deprecated))
                 }
             }
         }

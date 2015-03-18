@@ -280,8 +280,8 @@ public class DefaultErrorMessages {
         MAP.put(COMPANION_OBJECT_NOT_ALLOWED, "A companion object is not allowed here");
 
         MAP.put(DEPRECATED_CLASS_OBJECT_SYNTAX, "'class object' syntax for companion objects was deprecated. Use 'companion' modifier instead");
-        MAP.put(DEPRECATED_SYMBOL, "'{0} is deprecated.");
-        MAP.put(DEPRECATED_SYMBOL_WITH_MESSAGE, "'{0} is deprecated. {1}", STRING);
+        MAP.put(DEPRECATED_SYMBOL, "''{0}'' is deprecated.", ONLY_NAMES_WITH_SHORT_TYPES);
+        MAP.put(DEPRECATED_SYMBOL_WITH_MESSAGE, "''{0}'' is deprecated. {1}", ONLY_NAMES_WITH_SHORT_TYPES, STRING);
 
         MAP.put(LOCAL_OBJECT_NOT_ALLOWED, "Named object ''{0}'' is a singleton and cannot be local. Try to use anonymous object instead", NAME);
         MAP.put(LOCAL_ENUM_NOT_ALLOWED, "Enum class ''{0}'' cannot be local", NAME);

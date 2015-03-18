@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.JetElement
 
 private val JAVA_DEPRECATED = FqName(javaClass<Deprecated>().getName())
 private val KOTLIN_DEPRECATED = DescriptorUtils.getFqNameSafe(KotlinBuiltIns.getInstance().getDeprecatedAnnotation())
@@ -31,12 +30,12 @@ public fun DeclarationDescriptor.getDeclaredDeprecatedAnnotation(): AnnotationDe
     return getAnnotations().findAnnotation(KOTLIN_DEPRECATED) ?: getAnnotations().findAnnotation(JAVA_DEPRECATED)
 }
 
-public fun createDeprecationDiagnostic(element: PsiElement, descriptor: AnnotationDescriptor): Diagnostic {
-    val message = getMessageFromAnnotationDescriptor(descriptor)
+public fun createDeprecationDiagnostic(element: PsiElement, descriptor: DeclarationDescriptor, deprecated: AnnotationDescriptor): Diagnostic {
+    val message = getMessageFromAnnotationDescriptor(deprecated)
     return if (message == null)
-        Errors.DEPRECATED_SYMBOL.on(element)
+        Errors.DEPRECATED_SYMBOL.on(element, descriptor)
     else
-        Errors.DEPRECATED_SYMBOL_WITH_MESSAGE.on(element, message)
+        Errors.DEPRECATED_SYMBOL_WITH_MESSAGE.on(element, descriptor, message)
 }
 
 private fun getMessageFromAnnotationDescriptor(descriptor: AnnotationDescriptor): String? {
