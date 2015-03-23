@@ -18,24 +18,24 @@ package org.jetbrains.kotlin.cli.jvm.compiler;
 
 import com.intellij.core.CoreJavaFileManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.file.PsiPackageImpl;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import jet.runtime.typeinfo.JetValueParameter;
 import kotlin.Function1;
-import kotlin.KotlinPackage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.name.ClassId;
+import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.name.Name;
 
-import java.util.*;
-import java.util.regex.Pattern;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 public class CoreJavaFileManagerExt extends CoreJavaFileManager implements JavaFileManager {
     private static final Logger LOG = Logger.getInstance("#com.intellij.core.CoreJavaFileManager");
@@ -48,7 +48,7 @@ public class CoreJavaFileManagerExt extends CoreJavaFileManager implements JavaF
     public CoreJavaFileManagerExt(PackagesCache packagesCache, PsiManager psiManager) {
         super(psiManager);
         this.packagesCache = packagesCache;
-        myPsiManager = psiManager;
+        this.myPsiManager = psiManager;
     }
 
     public void setPackagesCache(PackagesCache packagesCache) {
@@ -60,18 +60,45 @@ public class CoreJavaFileManagerExt extends CoreJavaFileManager implements JavaF
         List<Name> packageNameSegments = classId.getPackageFqName().pathSegments();
 
         final String classNameWithInnerClasses = classId.getRelativeClassName().asString();
-        List<String> NAME_IT = KotlinPackage.map(packageNameSegments, new Function1<Name, String>() {
-            @Override
-            public String invoke(Name name) {
-                return name.getIdentifier();
-            }
-        });
-        return packagesCache.searchPackages(NAME_IT, new Function1<VirtualFile, PsiClass>() {
+        return packagesCache.searchPackages(classId.getPackageFqName(), new Function1<VirtualFile, PsiClass>() {
             @Override
             public PsiClass invoke(VirtualFile dir) {
                 return findClassGivenPackage(scope, dir, classNameWithInnerClasses);
             }
         });
+    }
+
+    @Override
+    public PsiClass findClass(@NotNull String qName, @NotNull GlobalSearchScope scope) {
+        //TODO: comment
+        ClassId classIdAsTopLevelClass = ClassId.topLevel(new FqName(qName));
+        PsiClass psiClass = findClass(classIdAsTopLevelClass, scope);
+        if (psiClass != null) {
+            return psiClass;
+        }
+        return super.findClass(qName, scope);
+    }
+
+    @NotNull
+    @Override
+    public PsiClass[] findClasses(@NotNull String qName, @NotNull final GlobalSearchScope scope) {
+        final List<PsiClass> result = new ArrayList<PsiClass>();
+        ClassId classIdAsTopLevelClass = ClassId.topLevel(new FqName(qName));
+        final String classNameWithInnerClasses = classIdAsTopLevelClass.getRelativeClassName().asString();
+        packagesCache.searchPackages(classIdAsTopLevelClass.getPackageFqName(), new Function1<VirtualFile, Object>() {
+            @Override
+            public Object invoke(VirtualFile dir) {
+                PsiClass psiClass = findClassGivenPackage(scope, dir, classNameWithInnerClasses);
+                if (psiClass != null) {
+                    result.add(psiClass);
+                }
+                return null;
+            }
+        });
+        if (result.isEmpty()) {
+            return super.findClasses(qName, scope);
+        }
+        return result.toArray(new PsiClass[result.size()]);
     }
 
     @Nullable

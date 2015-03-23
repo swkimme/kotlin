@@ -17,6 +17,7 @@
 package org.jetbrains.kotlin.cli.jvm.compiler
 
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.name.FqName
 import java.util.ArrayList
 import java.util.HashMap
 import kotlin.properties.Delegates
@@ -34,7 +35,8 @@ class PackagesCache(private val classpath: List<VirtualFile>) {
         }
     }
 
-    fun <T : Any> searchPackages(packagesPath: List<String>, handler: (VirtualFile) -> T?): T? {
+    fun <T : Any> searchPackages(packageFqName: FqName, handler: (VirtualFile) -> T?): T? {
+        val packagesPath = packageFqName.pathSegments().map { it.getIdentifier() }
         if (packagesPath.isEmpty()) {
             classpath.forEach { file ->
                 val result = handler(file)
