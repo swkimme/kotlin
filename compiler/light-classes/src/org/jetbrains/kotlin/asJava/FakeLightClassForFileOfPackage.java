@@ -55,6 +55,12 @@ public class FakeLightClassForFileOfPackage extends AbstractLightClass implement
         return null;
     }
 
+    @Nullable
+    @Override
+    public PsiElement getMirror() {
+        return null;
+    }
+
     @Override
     public PsiFile getContainingFile() {
         return file;

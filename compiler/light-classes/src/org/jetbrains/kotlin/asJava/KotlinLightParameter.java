@@ -17,10 +17,7 @@
 package org.jetbrains.kotlin.asJava;
 
 import com.intellij.lang.Language;
-import com.intellij.psi.PsiAnnotationOwner;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiParameter;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.ArrayUtil;
@@ -101,6 +98,12 @@ public class KotlinLightParameter extends LightParameter implements KotlinLightE
         }
 
         return setter != null ? setter.getParameter() : null;
+    }
+
+    @Nullable
+    @Override
+    public PsiElement getMirror() {
+        return getOrigin();
     }
 
     @Override

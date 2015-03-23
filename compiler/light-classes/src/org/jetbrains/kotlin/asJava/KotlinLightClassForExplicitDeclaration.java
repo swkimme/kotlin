@@ -204,6 +204,12 @@ public class KotlinLightClassForExplicitDeclaration extends KotlinWrappingLightC
         return classOrObject;
     }
 
+    @Nullable
+    @Override
+    public PsiElement getMirror() {
+        return getOrigin();
+    }
+
     @NotNull
     @Override
     public FqName getFqName() {

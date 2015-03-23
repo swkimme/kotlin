@@ -57,6 +57,12 @@ public class KotlinLightTypeParameter
         return jetOwner.getTypeParameters().get(index);
     }
 
+    @Nullable
+    @Override
+    public PsiElement getMirror() {
+        return getOrigin();
+    }
+
     @NotNull
     private PsiTypeParameterListOwner getOwnerDelegate() {
         if (owner instanceof KotlinLightClass) return ((KotlinLightClass) owner).getDelegate();
