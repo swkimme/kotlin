@@ -17,21 +17,70 @@
 package org.jetbrains.kotlin.checkers;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.bugs.StaticCallOnSubclassInspection;
 import com.siyeh.ig.bugs.StaticFieldReferenceOnSubclassInspection;
+import kotlin.Function1;
+import kotlin.KotlinPackage;
 import org.jetbrains.kotlin.idea.KotlinDaemonAnalyzerTestCase;
 import org.jetbrains.kotlin.idea.PluginTestCaseBase;
+import org.jetbrains.kotlin.test.InTextDirectivesUtils;
+
+import java.io.File;
+import java.util.List;
 
 public class KotlinAndJavaCheckerTest extends KotlinDaemonAnalyzerTestCase {
+    private static final LocalInspectionTool[] DEFAULT_TOOLS = new LocalInspectionTool[] {
+            new StaticCallOnSubclassInspection(),
+            new StaticFieldReferenceOnSubclassInspection(),
+            new NullableStuffInspection()
+    };
+
+    private LocalInspectionTool[] tools;
+
+    private static LocalInspectionTool mapStringToTool(String toolString) {
+        if ("StaticCallOnSubclassInspection".equals(toolString))
+            return new StaticCallOnSubclassInspection();
+        if ("StaticFieldReferenceOnSubclassInspection".equals(toolString))
+            return new StaticFieldReferenceOnSubclassInspection();
+        if ("NullableStuffInspection".equals(toolString))
+            return new NullableStuffInspection();
+        if ("DataFlowInspection".equals(toolString))
+            return new DataFlowInspection();
+
+        throw new IllegalArgumentException("Can't find inspection tool with identifer: " + toolString);
+    }
+
     @Override
     protected LocalInspectionTool[] configureLocalInspectionTools() {
-        return new LocalInspectionTool[] {
-                new StaticCallOnSubclassInspection(),
-                new StaticFieldReferenceOnSubclassInspection(),
-                new NullableStuffInspection()
-        };
+        return tools;
+    }
+
+    @Override
+    protected void setUp() throws Exception {
+        File configureFile = new File(getTestDataPath(), getTestName(false) + ".txt");
+        if (!configureFile.exists()) {
+            tools = DEFAULT_TOOLS;
+        }
+        else {
+            String configureText = FileUtil.loadFile(configureFile, true);
+
+            InTextDirectivesUtils.assertHasUnknownPrefixes(configureText, KotlinPackage.listOf("TOOL:"));
+            List<String> toolsStrings = InTextDirectivesUtils.findListWithPrefixes(configureText, "TOOL:");
+
+            tools = ArrayUtil.toObjectArray(KotlinPackage.map(toolsStrings, new Function1<String, LocalInspectionTool>() {
+                @Override
+                public LocalInspectionTool invoke(String toolString) {
+                    return mapStringToTool(toolString);
+                }
+            }), LocalInspectionTool.class);
+        }
+
+        super.setUp();
     }
 
     @Override
@@ -78,5 +127,9 @@ public class KotlinAndJavaCheckerTest extends KotlinDaemonAnalyzerTestCase {
 
     public void testEnumEntriesInSwitch() throws Exception {
         doTest(true, true, "EnumEntriesInSwitch.java", "EnumEntriesInSwitch.kt");
+    }
+
+    public void testEnumStaticImportInJava() throws Exception {
+        doTest(true, true, "EnumStaticImportInJava.java", "EnumStaticImportInJava.kt");
     }
 }
