@@ -18,17 +18,13 @@ package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.psi.JetFile
-import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
+import com.intellij.util.SmartList
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.decompiler.navigation.DecompiledNavigationUtils
 import org.jetbrains.kotlin.idea.references.BuiltInsReferenceResolver
-import com.intellij.psi.JavaPsiFacade
-import org.jetbrains.kotlin.idea.search.allScope
-import org.jetbrains.kotlin.utils.addIfNotNull
-import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor.Kind.*
-import java.util.*
-import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.utils.addToStdlib.streamOfLazyValues
+import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
+import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
+import org.jetbrains.kotlin.utils.addToStdlib.sequenceOfLazyValues
 
 public object DescriptorToSourceUtilsIde {
     // Returns PSI element for descriptor. If there are many relevant elements (e.g. it is fake override
@@ -39,18 +35,24 @@ public object DescriptorToSourceUtilsIde {
 
     // Returns all PSI elements for descriptor. It can find declarations in builtins or decompiled code.
     public fun getAllDeclarations(project: Project, targetDescriptor: DeclarationDescriptor): Collection<PsiElement> {
-        val result = getDeclarationsStream(project, targetDescriptor).toHashSet()
-        // filter out elements which are navigate to some other element of the result
+        val result = getDeclarationsStream(project, targetDescriptor)
+
+        val firstOrNull = result.firstOrNull()
+        if (firstOrNull == null) return emptyList()
+
+        if (ProjectRootsUtil.isInProjectSource(firstOrNull)) return SmartList(firstOrNull)
+
+        // filter out elements which navigate to some other element of the result
         // this is needed to avoid duplicated results for references to declaration in same library source file
-        return result.filter { element -> result.none { element != it && it.getNavigationElement() == element } }
+        return result.toHashSet().filter { element -> result.none { element != it && it.getNavigationElement() == element } }
     }
 
-    private fun getDeclarationsStream(project: Project, targetDescriptor: DeclarationDescriptor): Stream<PsiElement> {
-        val effectiveReferencedDescriptors = DescriptorToSourceUtils.getEffectiveReferencedDescriptors(targetDescriptor).stream()
+    private fun getDeclarationsStream(project: Project, targetDescriptor: DeclarationDescriptor): Sequence<PsiElement> {
+        val effectiveReferencedDescriptors = DescriptorToSourceUtils.getEffectiveReferencedDescriptors(targetDescriptor).sequence()
         return effectiveReferencedDescriptors.flatMap { effectiveReferenced ->
             // References in library sources should be resolved to corresponding decompiled declarations,
             // therefore we put both source declaration and decompiled declaration to stream, and afterwards we filter it in getAllDeclarations
-            streamOfLazyValues(
+            sequenceOfLazyValues(
                     { DescriptorToSourceUtils.getSourceFromDescriptor(effectiveReferenced) },
                     { findBuiltinDeclaration(project, effectiveReferenced) ?: DecompiledNavigationUtils.getDeclarationFromDecompiledClassFile(project, effectiveReferenced) }
             )

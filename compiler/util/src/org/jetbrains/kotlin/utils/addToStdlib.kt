@@ -53,4 +53,4 @@ public inline fun <reified T> Array<*>.firstIsInstance(): T {
     throw NoSuchElementException("No element of given type found")
 }
 
-public fun <T> streamOfLazyValues(vararg elements: () -> T): Stream<T> = elements.stream().map { it() }
+public fun <T> sequenceOfLazyValues(vararg elements: () -> T): Sequence<T> = elements.sequence().map { it() }
