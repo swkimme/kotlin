@@ -20,10 +20,10 @@ import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.psi.JetDeclaration
 
-public trait KotlinLightElement<T : JetDeclaration, D : PsiElement> : PsiCompiledElement {
+public trait KotlinLightElement<T : JetDeclaration, D : PsiElement> {
     public fun getOrigin(): T?
 
     public fun getDelegate(): D
 
-    override fun getMirror(): PsiElement? = getOrigin()
+    fun getMirror(): PsiElement? = getOrigin()
 }

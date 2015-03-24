@@ -22,17 +22,27 @@ import com.intellij.psi.impl.light.LightMethod
 
 
 public class KotlinNoOriginLightMethod(manager: PsiManager, method: PsiMethod, containingClass: PsiClass) :
-        LightMethod(manager, method, containingClass), PsiCompiledElement {
+        LightMethod(manager, method, containingClass) {
 
-    override fun getMirror(): PsiElement? = null
+    fun getMirror(): PsiElement? = null
 
     override fun toString() = "KotlinNoOriginLightMethod:${getName()}" + if (isConstructor()) " ctor" else ""
+    override fun getBody(): PsiCodeBlock? = null
+
+    override fun accept(visitor: PsiElementVisitor) {
+        if (visitor is JavaElementVisitor) {
+            visitor.visitMethod(this)
+        }
+        else {
+            visitor.visitElement(this)
+        }
+    }
 }
 
 public class KotlinNoOriginLightField(manager: PsiManager, field: PsiField, containingClass: PsiClass) :
-        LightField(manager, field, containingClass), PsiCompiledElement {
+        LightField(manager, field, containingClass) {
 
-    override fun getMirror(): PsiElement? = null
+    fun getMirror(): PsiElement? = null
 
     override fun toString() = "KotlinNoOriginLightField:${getName()}"
 }
