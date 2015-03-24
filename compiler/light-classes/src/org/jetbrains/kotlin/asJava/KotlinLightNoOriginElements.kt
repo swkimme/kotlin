@@ -26,7 +26,7 @@ public class KotlinNoOriginLightMethod(manager: PsiManager, method: PsiMethod, c
 
     override fun getMirror(): PsiElement? = null
 
-    override fun toString() = "KotlinNoOriginLightMethod: ${getName()}" + if (isConstructor()) " ctor" else ""
+    override fun toString() = "KotlinNoOriginLightMethod:${getName()}" + if (isConstructor()) " ctor" else ""
 }
 
 public class KotlinNoOriginLightField(manager: PsiManager, field: PsiField, containingClass: PsiClass) :
@@ -34,5 +34,5 @@ public class KotlinNoOriginLightField(manager: PsiManager, field: PsiField, cont
 
     override fun getMirror(): PsiElement? = null
 
-    override fun toString() = "KotlinNoOriginLightField: ${getName()}"
+    override fun toString() = "KotlinNoOriginLightField:${getName()}"
 }
