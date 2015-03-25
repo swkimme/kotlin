@@ -74,8 +74,12 @@ public fun Char.isUpperCase(): Boolean = Character.isUpperCase(this)
  */
 public fun Char.isLowerCase(): Boolean = Character.isLowerCase(this)
 
-
+/**
+ * Converts this character to uppercase.
+ */
 public fun Char.toUpperCase(): Char = Character.toUpperCase(this)
 
-
+/**
+ * Converts this character to lowercase.
+ */
 public fun Char.toLowerCase(): Char = Character.toLowerCase(this)
