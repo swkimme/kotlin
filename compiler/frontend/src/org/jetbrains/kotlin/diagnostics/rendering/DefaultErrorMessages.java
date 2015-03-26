@@ -17,6 +17,7 @@
 package org.jetbrains.kotlin.diagnostics.rendering;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import kotlin.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -54,11 +55,23 @@ public class DefaultErrorMessages {
     }
 
     private static final DiagnosticFactoryToRendererMap MAP = new DiagnosticFactoryToRendererMap();
-    private static final ExtensionProvider<Extension> ADDITIONAL_RENDERER_MAPS = ExtensionProvider.create(Extension.EP_NAME);
+    private static final ExtensionProvider<Extension, List<DiagnosticFactoryToRendererMap>> RENDERER_MAPS = ExtensionProvider.create(
+            Extension.EP_NAME,
+            new Function1<List<? extends Extension>, List<DiagnosticFactoryToRendererMap>>() {
+                @Override
+                public List<DiagnosticFactoryToRendererMap> invoke(List<? extends Extension> extensions) {
+                    List<DiagnosticFactoryToRendererMap> result = new ArrayList<DiagnosticFactoryToRendererMap>(extensions.size() + 1);
+                    for (Extension extension : extensions) {
+                        result.add(extension.getMap());
+                    }
+                    result.add(MAP);
+                    return result;
+                }
+            });
 
     @NotNull
     public static String render(@NotNull Diagnostic diagnostic) {
-        for (DiagnosticFactoryToRendererMap map : getRendererMaps()) {
+        for (DiagnosticFactoryToRendererMap map : RENDERER_MAPS.get()) {
             DiagnosticRenderer renderer = map.get(diagnostic.getFactory());
             if (renderer != null) {
                 //noinspection unchecked
@@ -68,21 +81,10 @@ public class DefaultErrorMessages {
         throw new IllegalArgumentException("Don't know how to render diagnostic of type " + diagnostic.getFactory().getName());
     }
 
-    @NotNull
-    private static List<DiagnosticFactoryToRendererMap> getRendererMaps() {
-        List<Extension> extensions = ADDITIONAL_RENDERER_MAPS.get();
-        List<DiagnosticFactoryToRendererMap> result = new ArrayList<DiagnosticFactoryToRendererMap>(extensions.size() + 1);
-        for (Extension extension : extensions) {
-            result.add(extension.getMap());
-        }
-        result.add(MAP);
-        return result;
-    }
-
     @TestOnly
     @Nullable
     public static DiagnosticRenderer getRendererForDiagnostic(@NotNull Diagnostic diagnostic) {
-        for (DiagnosticFactoryToRendererMap map : getRendererMaps()) {
+        for (DiagnosticFactoryToRendererMap map : RENDERER_MAPS.get()) {
             DiagnosticRenderer renderer = map.get(diagnostic.getFactory());
 
             if (renderer != null) return renderer;

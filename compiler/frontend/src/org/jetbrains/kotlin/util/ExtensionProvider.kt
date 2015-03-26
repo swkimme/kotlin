@@ -22,10 +22,10 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import java.lang.ref.WeakReference
 import kotlin.platform.platformStatic
 
-public class ExtensionProvider<T>(private val epName: ExtensionPointName<T>) {
-    private var cached = WeakReference<Pair<Application, List<T>>>(null)
+public open class ExtensionProvider<T, R> protected (private val epName: ExtensionPointName<T>, private val f: (List<T>) -> R) {
+    private var cached = WeakReference<Pair<Application, R>>(null)
 
-    public fun get(): List<T> {
+    public fun get(): R {
         val cached = cached.get() ?: return update()
         val (app, extensions) = cached
         if (app == ApplicationManager.getApplication()) {
@@ -36,15 +36,21 @@ public class ExtensionProvider<T>(private val epName: ExtensionPointName<T>) {
         }
     }
 
-    private fun update(): List<T> {
+    private fun update(): R {
         val newVal = ApplicationManager.getApplication().let { app ->
-            Pair(app, app.getExtensions(epName).toList())
+            Pair(app, f(app.getExtensions(epName).toList()))
         }
         cached = WeakReference(newVal)
         return newVal.second
     }
 
-    public companion object {
-        platformStatic fun <T> create(epName: ExtensionPointName<T>): ExtensionProvider<T> = ExtensionProvider(epName)
+    companion object {
+        platformStatic public fun <T, R> create(epName: ExtensionPointName<T>, f: (List<T>) -> R): ExtensionProvider<T, R> = ExtensionProvider(epName, f)
+    }
+}
+
+public class ExtensionCache<T>(epName: ExtensionPointName<T>) : ExtensionProvider<T, List<T>>(epName, { it }) {
+    companion object {
+        platformStatic public fun <T> create(epName: ExtensionPointName<T>): ExtensionCache<T> = ExtensionCache(epName)
     }
 }
