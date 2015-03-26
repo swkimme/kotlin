@@ -8443,6 +8443,12 @@ public class JetDiagnosticsTestGenerated extends AbstractJetDiagnosticsTest {
                 doTest(fileName);
             }
 
+            @TestMetadata("kt7068.kt")
+            public void testKt7068() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/overload/kt7068.kt");
+                doTest(fileName);
+            }
+
             @TestMetadata("OverloadFunRegularAndExt.kt")
             public void testOverloadFunRegularAndExt() throws Exception {
                 String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/overload/OverloadFunRegularAndExt.kt");
