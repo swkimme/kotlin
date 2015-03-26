@@ -638,6 +638,61 @@ public fun String.contains(seq: CharSequence, ignoreCase: Boolean = false): Bool
 
 // rangesDelimitedBy
 
+
+private class DelimitedRangesSequence(private val string: String, private val startIndex: Int, private val limit: Int, private val getNextMatch: String.(Int) -> Pair<Int, Int>?): Sequence<IntRange> {
+
+    override fun iterator(): Iterator<IntRange> = object : Iterator<IntRange> {
+        var nextState: Int = -1 // -1 for unknown, 0 for done, 1 for continue
+        var currentStartIndex: Int = Math.min(Math.max(startIndex, 0), string.length())
+        var nextItem: IntRange? = null
+        var counter: Int = 0
+
+        private fun calcNext() {
+            if (currentStartIndex < 0) {
+                nextState = 0
+                nextItem = null
+            }
+            else {
+                if (limit > 0 && ++counter >= limit) {
+                    nextItem = currentStartIndex..string.lastIndex
+                    currentStartIndex = -1
+                }
+                else {
+                    val match = string.getNextMatch(currentStartIndex)
+                    if (match == null) {
+                        nextItem = currentStartIndex..string.lastIndex
+                        currentStartIndex = -1
+                    }
+                    else {
+                        val (index,length) = match
+                        nextItem = currentStartIndex..index-1
+                        currentStartIndex = index + length
+                    }
+                }
+                nextState = 1
+            }
+        }
+
+        override fun next(): IntRange {
+            if (nextState == -1)
+                calcNext()
+            if (nextState == 0)
+                throw NoSuchElementException()
+            val result = nextItem as IntRange
+            // Clean next to avoid keeping reference on yielded instance
+            nextItem = null
+            nextState = -1
+            return result
+        }
+
+        override fun hasNext(): Boolean {
+            if (nextState == -1)
+                calcNext()
+            return nextState == 1
+        }
+    }
+}
+
 /**
  * Returns a sequence of index ranges of substrings in this string around occurrences of the specified [delimiters].
  *
@@ -651,60 +706,9 @@ public fun String.contains(seq: CharSequence, ignoreCase: Boolean = false): Bool
 public fun String.rangesDelimitedBy(vararg delimiters: Char, startIndex: Int = 0, ignoreCase: Boolean = false, limit: Int = 0): Sequence<IntRange> {
     require(limit >= 0, { "Limit must be non-negative, but was $limit" })
 
-    return object : Sequence<IntRange> {
-
-        override fun iterator(): Iterator<IntRange> = object : Iterator<IntRange> {
-            var nextState: Int = -1 // -1 for unknown, 0 for done, 1 for continue
-            var currentStartIndex: Int = Math.min(Math.max(startIndex, 0), length())
-            var nextItem: IntRange? = null
-            var counter: Int = 0
-
-            private fun calcNext() {
-                if (currentStartIndex < 0) {
-                    nextState = 0
-                    nextItem = null
-                }
-                else {
-                    if (limit > 0 && ++counter >= limit) {
-                        nextItem = currentStartIndex..lastIndex
-                        currentStartIndex = -1
-                    }
-                    else {
-                        val match = indexOfAny(delimiters, startIndex = currentStartIndex, ignoreCase = ignoreCase)
-                        if (match == null) {
-                            nextItem = currentStartIndex..lastIndex
-                            currentStartIndex = -1
-                        }
-                        else {
-                            val index = match.first
-                            nextItem = currentStartIndex..index-1
-                            currentStartIndex = index + 1
-                        }
-                    }
-                    nextState = 1
-                }
-            }
-
-            override fun next(): IntRange {
-                if (nextState == -1)
-                    calcNext()
-                if (nextState == 0)
-                    throw NoSuchElementException()
-                val result = nextItem as IntRange
-                // Clean next to avoid keeping reference on yielded instance
-                nextItem = null
-                nextState = -1
-                return result
-            }
-
-            override fun hasNext(): Boolean {
-                if (nextState == -1)
-                    calcNext()
-                return nextState == 1
-            }
-        }
-    }
+    return DelimitedRangesSequence(this, startIndex, limit, { startIndex -> indexOfAny(delimiters, startIndex, ignoreCase = ignoreCase)?.let { Pair(it.first, 1) }})
 }
+
 
 /**
  * Returns a sequence of index ranges of substrings in this string around occurrences of the specified [delimiters].
@@ -724,59 +728,8 @@ public fun String.rangesDelimitedBy(vararg delimiters: String, startIndex: Int =
     require(limit >= 0, { "Limit must be non-negative, but was $limit" } )
     val delimitersList = delimiters.asList()
 
-    return object : Sequence<IntRange> {
+    return DelimitedRangesSequence(this, startIndex, limit, { startIndex -> indexOfAny(delimitersList, startIndex, ignoreCase = ignoreCase)?.let { Pair(it.first, it.second.length() )} })
 
-        override fun iterator(): Iterator<IntRange> = object : Iterator<IntRange> {
-            var nextState: Int = -1 // -1 for unknown, 0 for done, 1 for continue
-            var currentStartIndex: Int = Math.min(Math.max(startIndex, 0), length())
-            var nextItem: IntRange? = null
-            var counter: Int = 0
-
-            private fun calcNext() {
-                if (currentStartIndex < 0) {
-                    nextState = 0
-                    nextItem = null
-                }
-                else {
-                    if (limit > 0 && ++counter >= limit) {
-                        nextItem = currentStartIndex..lastIndex
-                        currentStartIndex = -1
-                    }
-                    else {
-                        val match = indexOfAny(delimitersList, startIndex = currentStartIndex, ignoreCase = ignoreCase)
-                        if (match == null) {
-                            nextItem = currentStartIndex..lastIndex
-                            currentStartIndex = -1
-                        }
-                        else {
-                            val (index, delimiter) = match
-                            nextItem = currentStartIndex..index-1
-                            currentStartIndex = index + delimiter.length()
-                        }
-                    }
-                    nextState = 1
-                }
-            }
-
-            override fun next(): IntRange {
-                if (nextState == -1)
-                    calcNext()
-                if (nextState == 0)
-                    throw NoSuchElementException()
-                val result = nextItem as IntRange
-                // Clean next to avoid keeping reference on yielded instance
-                nextItem = null
-                nextState = -1
-                return result
-            }
-
-            override fun hasNext(): Boolean {
-                if (nextState == -1)
-                    calcNext()
-                return nextState == 1
-            }
-        }
-    }
 }
 
 
