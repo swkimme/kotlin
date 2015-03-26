@@ -49,6 +49,7 @@ import java.util.zip.ZipOutputStream;
 
 public class KotlinJpsBuildTest extends AbstractKotlinJpsBuildTestCase {
     private static final String PROJECT_NAME = "kotlinProject";
+    private static final String MODULE_NAME = "module2";
     private static final String JDK_NAME = "IDEA_JDK";
 
     private static final String[] EXCLUDE_FILES = { "Excluded.class", "YetAnotherExcluded.class" };
@@ -59,6 +60,12 @@ public class KotlinJpsBuildTest extends AbstractKotlinJpsBuildTestCase {
     private static final Set<String> EXPECTED_JS_FILES_IN_OUTPUT_FOR_STDLIB_ONLY = KotlinPackage.hashSetOf(
             PROJECT_NAME + ".js",
             PROJECT_NAME + ".meta.js",
+            "lib/kotlin.js",
+            "lib/stdlib.meta.js"
+    );
+    private static final Set<String> EXPECTED_JS_FILES_IN_OUTPUT_FOR_MODULE_STDLIB_ONLY = KotlinPackage.hashSetOf(
+            MODULE_NAME + ".js",
+            MODULE_NAME + ".meta.js",
             "lib/kotlin.js",
             "lib/stdlib.meta.js"
     );
@@ -90,6 +97,7 @@ public class KotlinJpsBuildTest extends AbstractKotlinJpsBuildTestCase {
             "custom/META-INF-ex/file2.js",
             "custom/res0.js",
             "custom/resdir/res1.js");
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -148,6 +156,19 @@ public class KotlinJpsBuildTest extends AbstractKotlinJpsBuildTestCase {
         checkWhen(touch("src/test1.kt"), null, k2jsOutput(PROJECT_NAME));
     }
 
+    public void testKotlinJavaScriptProjectWithTwoModules() {
+        initProject();
+        addKotlinJavaScriptStdlibDependency();
+        makeAll().assertSuccessful();
+
+        assertEquals(EXPECTED_JS_FILES_IN_OUTPUT_FOR_STDLIB_ONLY, contentOfOutputDir(PROJECT_NAME));
+        assertEquals(EXPECTED_JS_FILES_IN_OUTPUT_FOR_MODULE_STDLIB_ONLY, contentOfOutputDir(MODULE_NAME));
+
+        checkWhen(touch("src/test1.kt"), null, k2jsOutput(PROJECT_NAME));
+        checkWhen(touch("module2/src/module2.kt"), null, k2jsOutput(MODULE_NAME));
+        checkWhen(new Action[]{ touch("src/test1.kt"), touch("module2/src/module2.kt")}, null, k2jsOutput(PROJECT_NAME, MODULE_NAME));
+    }
+
     public void testKotlinJavaScriptProjectWithDirectoryAsStdlib() {
         initProject();
         File jslibJar = PathUtil.getKotlinPathsForDistDirectory().getJsStdLibJarPath();
@@ -203,7 +224,7 @@ public class KotlinJpsBuildTest extends AbstractKotlinJpsBuildTestCase {
         addKotlinJavaScriptDependency(KOTLIN_JS_LIBRARY, new File(workDir, KOTLIN_JS_LIBRARY_JAR));
         makeAll().assertFailed();
 
-        assertEquals(Collections.EMPTY_SET, contentOfOutputDir(PROJECT_NAME));
+        assertEquals(Collections.emptySet(), contentOfOutputDir(PROJECT_NAME));
     }
 
     public void testExcludeFolderInSourceRoot() {
@@ -234,8 +255,8 @@ public class KotlinJpsBuildTest extends AbstractKotlinJpsBuildTestCase {
         assertFilesExistInOutput(module, "Foo.class", "Bar.class");
         assertFilesNotExistInOutput(module, EXCLUDE_FILES);
 
-        checkWhen(touch("src/foo.kt"), null, new String[] { klass("kotlinProject", "Foo")} );
-        checkWhen(touch("src/Excluded.kt"), null, NOTHING );
+        checkWhen(touch("src/foo.kt"), null, new String[] {klass("kotlinProject", "Foo")});
+        checkWhen(touch("src/Excluded.kt"), null, NOTHING);
         checkWhen(touch("src/dir/YetAnotherExcluded.kt"), null, NOTHING);
     }
 
@@ -247,7 +268,7 @@ public class KotlinJpsBuildTest extends AbstractKotlinJpsBuildTestCase {
         assertFilesNotExistInOutput(module, EXCLUDE_FILES);
 
         checkWhen(touch("src/foo.kt"), null, new String[] { klass("kotlinProject", "Foo")} );
-        checkWhen(touch("src/dir/subdir/bar.kt"), null, new String[] { klass("kotlinProject", "Bar")} );
+        checkWhen(touch("src/dir/subdir/bar.kt"), null, new String[] {klass("kotlinProject", "Bar")});
 
         checkWhen(touch("src/dir/Excluded.kt"), null, NOTHING );
         checkWhen(touch("src/dir/subdir/YetAnotherExcluded.kt"), null, NOTHING);
@@ -260,7 +281,7 @@ public class KotlinJpsBuildTest extends AbstractKotlinJpsBuildTestCase {
         assertFilesExistInOutput(module, "Foo.class", "Bar.class");
         assertFilesNotExistInOutput(module, EXCLUDE_FILES);
 
-        checkWhen(touch("src/foo.kt"), null, new String[] { klass("kotlinProject", "Foo")} );
+        checkWhen(touch("src/foo.kt"), null, new String[] {klass("kotlinProject", "Foo")});
 
         checkWhen(touch("src/exclude/Excluded.kt"), null, NOTHING);
         checkWhen(touch("src/exclude/YetAnotherExcluded.kt"), null, NOTHING);
@@ -408,11 +429,15 @@ public class KotlinJpsBuildTest extends AbstractKotlinJpsBuildTestCase {
     }
 
     @NotNull
-    private static String[] k2jsOutput(String moduleName) {
-        String outputDir = "out/production/" + moduleName;
-        String[] result = new String[2];
-        result[0] = outputDir + "/" + moduleName + ".js";
-        result[1] = outputDir + "/" + moduleName + ".meta.js";
+    private static String[] k2jsOutput(String ...moduleNames) {
+        int length = moduleNames.length;
+        String[] result = new String[2 * length];
+        int index = 0;
+        for(String moduleName : moduleNames) {
+            String outputDir = "out/production/" + moduleName;
+            result[index++] = outputDir + "/" + moduleName + ".js";
+            result[index++] = outputDir + "/" + moduleName + ".meta.js";
+        }
         return result;
     }
 
