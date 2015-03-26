@@ -23,10 +23,10 @@ import java.lang.ref.WeakReference
 import kotlin.platform.platformStatic
 
 public class ExtensionProvider<T>(private val epName: ExtensionPointName<T>) {
-    private var appRef = WeakReference<Pair<Application, List<T>>>(null)
+    private var cached = WeakReference<Pair<Application, List<T>>>(null)
 
     public fun get(): List<T> {
-        val cached = appRef.get() ?: return update()
+        val cached = cached.get() ?: return update()
         val (app, extensions) = cached
         if (app == ApplicationManager.getApplication()) {
             return extensions
@@ -40,7 +40,7 @@ public class ExtensionProvider<T>(private val epName: ExtensionPointName<T>) {
         val newVal = ApplicationManager.getApplication().let { app ->
             Pair(app, app.getExtensions(epName).toList())
         }
-        appRef = WeakReference(newVal)
+        cached = WeakReference(newVal)
         return newVal.second
     }
 
