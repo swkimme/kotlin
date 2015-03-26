@@ -37,7 +37,7 @@ import org.jetbrains.kotlin.resolve.BindingContext;
 import org.jetbrains.kotlin.resolve.constants.ArrayValue;
 import org.jetbrains.kotlin.resolve.constants.CompileTimeConstant;
 import org.jetbrains.kotlin.resolve.constants.StringValue;
-import org.jetbrains.kotlin.util.ExtensionCache;
+import org.jetbrains.kotlin.util.ExtensionProvider;
 
 import java.util.*;
 
@@ -58,10 +58,10 @@ public class DiagnosticsWithSuppression implements Diagnostics {
 
     private static final Logger LOG = Logger.getInstance(DiagnosticsWithSuppression.class);
 
-    private static final ExtensionCache<SuppressStringProvider> ADDITIONAL_SUPPRESS_STRING_PROVIDERS
-            = ExtensionCache.create(SuppressStringProvider.EP_NAME);
-    private static final ExtensionCache<DiagnosticSuppressor> DIAGNOSTIC_SUPPRESSORS
-            = ExtensionCache.create(DiagnosticSuppressor.EP_NAME);
+    private static final ExtensionProvider<SuppressStringProvider> ADDITIONAL_SUPPRESS_STRING_PROVIDERS
+            = ExtensionProvider.create(SuppressStringProvider.EP_NAME);
+    private static final ExtensionProvider<DiagnosticSuppressor> DIAGNOSTIC_SUPPRESSORS
+            = ExtensionProvider.create(DiagnosticSuppressor.EP_NAME);
 
     private final BindingContext context;
     private final Collection<Diagnostic> diagnostics;

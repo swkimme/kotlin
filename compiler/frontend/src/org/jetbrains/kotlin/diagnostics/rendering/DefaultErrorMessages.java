@@ -33,7 +33,7 @@ import org.jetbrains.kotlin.renderer.MultiRenderer;
 import org.jetbrains.kotlin.renderer.Renderer;
 import org.jetbrains.kotlin.resolve.varianceChecker.VarianceChecker.VarianceConflictDiagnosticData;
 import org.jetbrains.kotlin.types.JetType;
-import org.jetbrains.kotlin.util.ExtensionProvider;
+import org.jetbrains.kotlin.util.MappedExtensionProvider;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -55,7 +55,7 @@ public class DefaultErrorMessages {
     }
 
     private static final DiagnosticFactoryToRendererMap MAP = new DiagnosticFactoryToRendererMap();
-    private static final ExtensionProvider<Extension, List<DiagnosticFactoryToRendererMap>> RENDERER_MAPS = ExtensionProvider.create(
+    private static final MappedExtensionProvider<Extension, List<DiagnosticFactoryToRendererMap>> RENDERER_MAPS = MappedExtensionProvider.create(
             Extension.EP_NAME,
             new Function1<List<? extends Extension>, List<DiagnosticFactoryToRendererMap>>() {
                 @Override
