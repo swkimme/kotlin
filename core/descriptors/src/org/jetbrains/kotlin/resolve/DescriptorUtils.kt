@@ -99,3 +99,29 @@ public fun ClassDescriptor.getSuperClassOrAny(): ClassDescriptor = getSuperClass
 
 public val ClassDescriptor.secondaryConstructors: List<ConstructorDescriptor>
     get() = getConstructors().filterNot { it.isPrimary() }
+
+/**
+ * Returns containing declaration of dispatch receiver for callable
+ *
+ * open class A {
+ *   fun foo() = 1
+ * }
+ *
+ * class B : A()
+ *
+ * for A.foo -> return A
+ * for B.foo -> return B
+ *
+ * class Outer {
+ *   inner class Inner()
+ * }
+ *
+ * for constructor of Outer.Inner -> return Outer
+ *
+ */
+public fun CallableDescriptor.getOwnerForEffectiveDispatchReceiverParameter(): DeclarationDescriptor? {
+    if (this is CallableMemberDescriptor && getKind() == CallableMemberDescriptor.Kind.FAKE_OVERRIDE) {
+        return getContainingDeclaration()
+    }
+    return getDispatchReceiverParameter()?.getContainingDeclaration()
+}
