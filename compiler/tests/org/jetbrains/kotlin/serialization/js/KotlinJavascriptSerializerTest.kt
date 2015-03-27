@@ -77,7 +77,7 @@ public class KotlinJavascriptSerializerTest : TestCaseWithTmpdir() {
                     .isUnitTestConfig(false)
                     .build()
             val analysisResult = TopDownAnalyzerFacadeForJS.analyzeFiles(files, config)
-            KotlinJavaScriptSerializer().serialize(MODULE_NAME, analysisResult.moduleDescriptor, metaFile)
+            FileUtil.writeToFile(metaFile, KotlinJavaScriptSerializer.metadataAsString(MODULE_NAME, analysisResult.moduleDescriptor))
         }
         finally {
             Disposer.dispose(rootDisposable)

@@ -35,56 +35,55 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 
 public class KotlinJavaScriptSerializer() {
+    companion object {
+        public fun metadataAsString(moduleName: String, moduleDescriptor: ModuleDescriptor): String {
+            val contentMap = hashMapOf<String, ByteArray>()
 
-    public fun serialize(moduleName: String, moduleDescriptor: ModuleDescriptor, metaFile: File) {
-        FileUtil.writeToFile(metaFile, serializeToString(moduleName, moduleDescriptor))
-    }
-
-    public fun serializeToString(moduleName: String, moduleDescriptor: ModuleDescriptor): String {
-        val contentMap = hashMapOf<String, ByteArray>()
-
-        DescriptorUtils.getPackagesFqNames(moduleDescriptor).forEach {
-            fqName -> serializePackage(moduleDescriptor, fqName) {
-            (fileName, stream) -> contentMap[fileName] = stream.toByteArray()
-        }
-        }
-
-        val content = KotlinJavascriptSerializationUtil.contentMapToByteArray(contentMap)
-        return KotlinJavascriptMetadataUtils.writeMetadataToString(moduleName, content)
-    }
-
-    fun serializePackage(module: ModuleDescriptor, fqName: FqName, writeFun: (String, ByteArrayOutputStream) -> Unit) {
-        val packageView = module.getPackage(fqName) ?: error("No package resolved in $module")
-
-        // TODO: perform some kind of validation? At the moment not possible because DescriptorValidator is in compiler-tests
-        // DescriptorValidator.validate(packageView)
-
-        val skip: (DeclarationDescriptor) -> Boolean = { DescriptorUtils.getContainingModule(it) != module}
-
-        val serializer = DescriptorSerializer.createTopLevel(BuiltInsSerializerExtension)
-
-        val classifierDescriptors = DescriptorSerializer.sort(packageView.getMemberScope().getDescriptors(DescriptorKindFilter.CLASSIFIERS))
-
-        ClassSerializationUtil.serializeClasses(classifierDescriptors, serializer, object : ClassSerializationUtil.Sink {
-            override fun writeClass(classDescriptor: ClassDescriptor, classProto: ProtoBuf.Class) {
-                val stream = ByteArrayOutputStream()
-                classProto.writeTo(stream)
-                writeFun(getFileName(classDescriptor), stream)
+            DescriptorUtils.getPackagesFqNames(moduleDescriptor).forEach {
+                fqName ->
+                serializePackage(moduleDescriptor, fqName) {
+                    fileName, stream ->
+                    contentMap[fileName] = stream.toByteArray()
+                }
             }
-        }, skip)
 
-        val packageStream = ByteArrayOutputStream()
-        val fragments = module.getPackageFragmentProvider().getPackageFragments(fqName)
-        val packageProto = serializer.packageProto(fragments, skip).build() ?: error("Package fragments not serialized: $fragments")
-        packageProto.writeTo(packageStream)
-        writeFun(BuiltInsSerializationUtil.getPackageFilePath(fqName), packageStream)
+            val content = KotlinJavascriptSerializationUtil.contentMapToByteArray(contentMap)
+            return KotlinJavascriptMetadataUtils.formatMetadataAsString(moduleName, content)
+        }
 
-        val nameStream = ByteArrayOutputStream()
-        NameSerializationUtil.serializeStringTable(nameStream, serializer.getStringTable())
-        writeFun(BuiltInsSerializationUtil.getStringTableFilePath(fqName), nameStream)
-    }
+        fun serializePackage(module: ModuleDescriptor, fqName: FqName, writeFun: (String, ByteArrayOutputStream) -> Unit) {
+            val packageView = module.getPackage(fqName) ?: error("No package resolved in $module")
 
-    fun getFileName(classDescriptor: ClassDescriptor): String {
-        return BuiltInsSerializationUtil.getClassMetadataPath(classDescriptor.classId)
+            // TODO: perform some kind of validation? At the moment not possible because DescriptorValidator is in compiler-tests
+            // DescriptorValidator.validate(packageView)
+
+            val skip: (DeclarationDescriptor) -> Boolean = { DescriptorUtils.getContainingModule(it) != module }
+
+            val serializer = DescriptorSerializer.createTopLevel(BuiltInsSerializerExtension)
+
+            val classifierDescriptors = DescriptorSerializer.sort(packageView.getMemberScope().getDescriptors(DescriptorKindFilter.CLASSIFIERS))
+
+            ClassSerializationUtil.serializeClasses(classifierDescriptors, serializer, object : ClassSerializationUtil.Sink {
+                override fun writeClass(classDescriptor: ClassDescriptor, classProto: ProtoBuf.Class) {
+                    val stream = ByteArrayOutputStream()
+                    classProto.writeTo(stream)
+                    writeFun(getFileName(classDescriptor), stream)
+                }
+            }, skip)
+
+            val packageStream = ByteArrayOutputStream()
+            val fragments = module.getPackageFragmentProvider().getPackageFragments(fqName)
+            val packageProto = serializer.packageProto(fragments, skip).build() ?: error("Package fragments not serialized: $fragments")
+            packageProto.writeTo(packageStream)
+            writeFun(BuiltInsSerializationUtil.getPackageFilePath(fqName), packageStream)
+
+            val nameStream = ByteArrayOutputStream()
+            NameSerializationUtil.serializeStringTable(nameStream, serializer.getStringTable())
+            writeFun(BuiltInsSerializationUtil.getStringTableFilePath(fqName), nameStream)
+        }
+
+        fun getFileName(classDescriptor: ClassDescriptor): String {
+            return BuiltInsSerializationUtil.getClassMetadataPath(classDescriptor.classId)
+        }
     }
 }
