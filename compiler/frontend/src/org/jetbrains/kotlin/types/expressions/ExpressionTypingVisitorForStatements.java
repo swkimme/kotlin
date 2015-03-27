@@ -142,7 +142,8 @@ public class ExpressionTypingVisitorForStatements extends ExpressionTypingVisito
             JetType type = typeInfo.getType();
             if (property.getTypeReference() == null && type != null) {
                 DataFlowValue variableDataFlowValue = DataFlowValueFactory.createDataFlowValue(propertyDescriptor, scope);
-                DataFlowValue initializerDataFlowValue = DataFlowValueFactory.createDataFlowValue(initializer, type, context.trace.getBindingContext());
+                DataFlowValue initializerDataFlowValue = DataFlowValueFactory.createDataFlowValue(
+                        initializer, type, context.trace.getBindingContext(), context.scope.getContainingDeclaration());
                 dataFlowInfo = dataFlowInfo.equate(variableDataFlowValue, initializerDataFlowValue);
             }
         }
@@ -341,8 +342,10 @@ public class ExpressionTypingVisitorForStatements extends ExpressionTypingVisito
             dataFlowInfo = rightInfo.getDataFlowInfo();
             JetType rightType = rightInfo.getType();
             if (left != null && leftType != null && rightType != null) {
-                DataFlowValue leftValue = DataFlowValueFactory.createDataFlowValue(left, leftType, context.trace.getBindingContext());
-                DataFlowValue rightValue = DataFlowValueFactory.createDataFlowValue(right, rightType, context.trace.getBindingContext());
+                DataFlowValue leftValue = DataFlowValueFactory.createDataFlowValue(
+                        left, leftType, context.trace.getBindingContext(), context.scope.getContainingDeclaration());
+                DataFlowValue rightValue = DataFlowValueFactory.createDataFlowValue(
+                        right, rightType, context.trace.getBindingContext(), context.scope.getContainingDeclaration());
                 dataFlowInfo = dataFlowInfo.equate(leftValue, rightValue);
             }
         }

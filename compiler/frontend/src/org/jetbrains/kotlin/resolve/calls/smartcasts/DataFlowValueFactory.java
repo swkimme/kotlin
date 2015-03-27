@@ -26,7 +26,9 @@ import org.jetbrains.kotlin.descriptors.*;
 import org.jetbrains.kotlin.psi.*;
 import org.jetbrains.kotlin.resolve.BindingContext;
 import org.jetbrains.kotlin.resolve.calls.callUtil.CallUtilPackage;
+import org.jetbrains.kotlin.resolve.calls.context.ResolutionContext;
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall;
+import org.jetbrains.kotlin.resolve.scopes.JetScope;
 import org.jetbrains.kotlin.resolve.scopes.WritableScope;
 import org.jetbrains.kotlin.resolve.scopes.receivers.*;
 import org.jetbrains.kotlin.types.JetType;
@@ -42,7 +44,8 @@ public class DataFlowValueFactory {
     public static DataFlowValue createDataFlowValue(
             @NotNull JetExpression expression,
             @NotNull JetType type,
-            @NotNull BindingContext bindingContext
+            @NotNull BindingContext bindingContext,
+            @NotNull DeclarationDescriptor containingDeclaration
     ) {
         if (expression instanceof JetConstantExpression) {
             JetConstantExpression constantExpression = (JetConstantExpression) expression;
@@ -50,7 +53,7 @@ public class DataFlowValueFactory {
         }
         if (type.isError()) return DataFlowValue.ERROR;
         if (KotlinBuiltIns.getInstance().getNullableNothingType().equals(type)) return DataFlowValue.NULL; // 'null' is the only inhabitant of 'Nothing?'
-        IdentifierInfo result = getIdForStableIdentifier(expression, bindingContext);
+        IdentifierInfo result = getIdForStableIdentifier(expression, bindingContext, containingDeclaration);
         return new DataFlowValue(result == NO_IDENTIFIER_INFO ? expression : result.id, type, result.isStable, getImmanentNullability(type));
     }
 
@@ -61,7 +64,11 @@ public class DataFlowValueFactory {
     }
 
     @NotNull
-    public static DataFlowValue createDataFlowValue(@NotNull ReceiverValue receiverValue, @NotNull BindingContext bindingContext) {
+    public static DataFlowValue createDataFlowValue(
+            @NotNull ReceiverValue receiverValue,
+            @NotNull BindingContext bindingContext,
+            @NotNull DeclarationDescriptor containingDeclaration
+    ) {
         if (receiverValue instanceof TransientReceiver || receiverValue instanceof ScriptReceiver) {
             // SCRIPT: smartcasts data flow
             JetType type = receiverValue.getType();
@@ -72,7 +79,8 @@ public class DataFlowValueFactory {
             return createDataFlowValue((ThisReceiver) receiverValue);
         }
         else if (receiverValue instanceof ExpressionReceiver) {
-            return createDataFlowValue(((ExpressionReceiver) receiverValue).getExpression(), receiverValue.getType(), bindingContext);
+            return createDataFlowValue(((ExpressionReceiver) receiverValue).getExpression(), receiverValue.getType(),
+                                       bindingContext, containingDeclaration);
         }
         else if (receiverValue == ReceiverValue.NO_RECEIVER) {
             throw new IllegalArgumentException("No DataFlowValue exists for ReceiverValue.NO_RECEIVER");
@@ -151,25 +159,26 @@ public class DataFlowValueFactory {
     @NotNull
     private static IdentifierInfo getIdForStableIdentifier(
             @Nullable JetExpression expression,
-            @NotNull BindingContext bindingContext
+            @NotNull BindingContext bindingContext,
+            @NotNull DeclarationDescriptor containingDeclaration
     ) {
         if (expression != null) {
             JetExpression deparenthesized = JetPsiUtil.deparenthesize(expression);
             if (expression != deparenthesized) {
-                return getIdForStableIdentifier(deparenthesized, bindingContext);
+                return getIdForStableIdentifier(deparenthesized, bindingContext, containingDeclaration);
             }
         }
         if (expression instanceof JetQualifiedExpression) {
             JetQualifiedExpression qualifiedExpression = (JetQualifiedExpression) expression;
             JetExpression receiverExpression = qualifiedExpression.getReceiverExpression();
             JetExpression selectorExpression = qualifiedExpression.getSelectorExpression();
-            IdentifierInfo receiverId = getIdForStableIdentifier(receiverExpression, bindingContext);
-            IdentifierInfo selectorId = getIdForStableIdentifier(selectorExpression, bindingContext);
+            IdentifierInfo receiverId = getIdForStableIdentifier(receiverExpression, bindingContext, containingDeclaration);
+            IdentifierInfo selectorId = getIdForStableIdentifier(selectorExpression, bindingContext, containingDeclaration);
 
             return combineInfo(receiverId, selectorId);
         }
         if (expression instanceof JetSimpleNameExpression) {
-            return getIdForSimpleNameExpression((JetSimpleNameExpression) expression, bindingContext);
+            return getIdForSimpleNameExpression((JetSimpleNameExpression) expression, bindingContext, containingDeclaration);
         }
         else if (expression instanceof JetThisExpression) {
             JetThisExpression thisExpression = (JetThisExpression) expression;
@@ -186,20 +195,14 @@ public class DataFlowValueFactory {
     @NotNull
     private static IdentifierInfo getIdForSimpleNameExpression(
             @NotNull JetSimpleNameExpression simpleNameExpression,
-            @NotNull BindingContext bindingContext
+            @NotNull BindingContext bindingContext,
+            @NotNull DeclarationDescriptor containingDeclaration
     ) {
         DeclarationDescriptor declarationDescriptor = bindingContext.get(REFERENCE_TARGET, simpleNameExpression);
         if (declarationDescriptor instanceof VariableDescriptor) {
             ResolvedCall<?> resolvedCall = CallUtilPackage.getResolvedCall(simpleNameExpression, bindingContext);
-            // We cannot call .getContainingJetFile because it can throw assertion error
-            PsiFile psiFile = simpleNameExpression.getContainingFile();
-            PackageFragmentDescriptor usagePackageDescriptor = psiFile instanceof JetFile ?
-                                                               bindingContext.get(FILE_TO_PACKAGE_FRAGMENT, (JetFile)psiFile) : null;
-            // todo uncomment assert
-            // KT-4113
-            // for now it fails for resolving 'invoke' convention, return it after 'invoke' algorithm changes
-            // assert resolvedCall != null : "Cannot create right identifier info if the resolved call is not known yet for " + declarationDescriptor;
 
+            PackageFragmentDescriptor usagePackageDescriptor = getContainingPackage(containingDeclaration);
             IdentifierInfo receiverInfo =
                     resolvedCall != null ? getIdForImplicitReceiver(resolvedCall.getDispatchReceiver(), simpleNameExpression) : null;
 
