@@ -61,10 +61,9 @@ public class LibrarySourcesConfig extends Config {
             @NotNull List<String> files,
             @NotNull EcmaVersion ecmaVersion,
             boolean sourcemap,
-            boolean inlineEnabled,
-            @Nullable String metaInfo
+            boolean inlineEnabled
     ) {
-        super(project, moduleId, ecmaVersion, sourcemap, inlineEnabled, metaInfo);
+        super(project, moduleId, ecmaVersion, sourcemap, inlineEnabled);
         this.files = files;
     }
 
@@ -141,13 +140,13 @@ public class LibrarySourcesConfig extends Config {
                 return true;
             }
             else {
-                String actualModuleName;
+                String moduleName;
 
                 if (isOldKotlinJavascriptLibrary(filePath)) {
-                    actualModuleName = LibraryUtils.getKotlinJsModuleName(filePath);
+                    moduleName = LibraryUtils.getKotlinJsModuleName(filePath);
                 }
                 else if (isKotlinJavascriptLibraryWithMetadata(filePath)) {
-                    actualModuleName = null;
+                    moduleName = null;
                 }
                 else {
                     report.invoke("'" + path + "' is not a valid Kotlin Javascript library");
@@ -155,7 +154,7 @@ public class LibrarySourcesConfig extends Config {
                 }
 
                 if (action != null) {
-                    action.invoke(actualModuleName, file);
+                    action.invoke(moduleName, file);
                 }
             }
         }

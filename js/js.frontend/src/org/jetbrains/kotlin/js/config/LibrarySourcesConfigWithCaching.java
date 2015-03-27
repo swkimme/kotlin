@@ -41,22 +41,10 @@ public class LibrarySourcesConfigWithCaching extends LibrarySourcesConfig {
             @NotNull EcmaVersion ecmaVersion,
             boolean sourcemap,
             boolean inlineEnabled,
-            boolean isUnitTestConfig,
-            @Nullable String metaInfo
-    ) {
-        super(project, moduleId, JS_STDLIB, ecmaVersion, sourcemap, inlineEnabled, metaInfo);
-        this.isUnitTestConfig = isUnitTestConfig;
-    }
-
-    public LibrarySourcesConfigWithCaching(
-            @NotNull Project project,
-            @NotNull String moduleId,
-            @NotNull EcmaVersion ecmaVersion,
-            boolean sourcemap,
-            boolean inlineEnabled,
             boolean isUnitTestConfig
     ) {
-        this(project, moduleId, ecmaVersion, sourcemap, inlineEnabled, isUnitTestConfig, null);
+        super(project, moduleId, JS_STDLIB, ecmaVersion, sourcemap, inlineEnabled);
+        this.isUnitTestConfig = isUnitTestConfig;
     }
 
     @Override

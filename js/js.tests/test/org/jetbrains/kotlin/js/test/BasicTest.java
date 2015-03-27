@@ -207,7 +207,7 @@ public abstract class BasicTest extends KotlinTestWithEnvironment {
     }
 
     @Nullable
-    protected String getMetaInfo(@NotNull String moduleId) {
+    protected String getMetaFileOutputPath(@NotNull String moduleId) {
         return null;
     }
 
@@ -285,12 +285,15 @@ public abstract class BasicTest extends KotlinTestWithEnvironment {
 
     @NotNull
     private Config createConfig(@NotNull Project project, @NotNull String moduleId, @NotNull EcmaVersion ecmaVersion, @Nullable List<String> libraries) {
+        Config config;
         if (libraries == null) {
-            return new LibrarySourcesConfigWithCaching(project, moduleId, ecmaVersion, shouldGenerateSourceMap(), IS_INLINE_ENABLED, shouldBeTranslateAsUnitTestClass(), getMetaInfo(moduleId));
+            config = new LibrarySourcesConfigWithCaching(project, moduleId, ecmaVersion, shouldGenerateSourceMap(), IS_INLINE_ENABLED, shouldBeTranslateAsUnitTestClass());
         }
         else {
-            return new LibrarySourcesConfig(project, moduleId, librariesWithJsStdlib(libraries), ecmaVersion, shouldGenerateSourceMap(), IS_INLINE_ENABLED, getMetaInfo(moduleId));
+            config = new LibrarySourcesConfig(project, moduleId, librariesWithJsStdlib(libraries), ecmaVersion, shouldGenerateSourceMap(), IS_INLINE_ENABLED);
         }
+        config.setMetaFileOutputPath(getMetaFileOutputPath(moduleId));
+        return config;
     }
 
     @NotNull
