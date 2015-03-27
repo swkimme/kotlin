@@ -1,7 +1,7 @@
 package test.kotlin
 
 import org.jetbrains.kotlin.cli.jvm.JVMConfigurationKeys
-import org.jetbrains.kotlin.cli.jvm.compiler.JetCoreEnvironment
+import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import com.intellij.openapi.Disposable
@@ -26,7 +26,7 @@ class PsiUtilsTest {
         }
     }
 
-    private var environment: JetCoreEnvironment? = null
+    private var environment: KotlinCoreEnvironment? = null
 
     [Before]
     fun before() {
@@ -34,7 +34,7 @@ class PsiUtilsTest {
 
         val configuration = CompilerConfiguration()
         configuration.addAll(JVMConfigurationKeys.CLASSPATH_KEY, PathUtil.getJdkClassesRoots())
-        environment = JetCoreEnvironment.createForTests(rootDisposable, configuration, EnvironmentConfigFiles.JVM_CONFIG_FILES)
+        environment = KotlinCoreEnvironment.createForTests(rootDisposable, configuration, EnvironmentConfigFiles.JVM_CONFIG_FILES)
     }
 
     [After]
