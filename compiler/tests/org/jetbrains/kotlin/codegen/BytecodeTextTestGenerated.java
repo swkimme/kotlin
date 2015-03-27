@@ -37,6 +37,7 @@ import java.util.regex.Pattern;
         BytecodeTextTestGenerated.DirectInvoke.class,
         BytecodeTextTestGenerated.ForLoop.class,
         BytecodeTextTestGenerated.Inline.class,
+        BytecodeTextTestGenerated.JvmOverloads.class,
         BytecodeTextTestGenerated.LazyCodegen.class,
         BytecodeTextTestGenerated.LineNumbers.class,
         BytecodeTextTestGenerated.Statements.class,
@@ -456,6 +457,21 @@ public class BytecodeTextTestGenerated extends AbstractBytecodeTextTest {
         @TestMetadata("splitedExceptionTable.kt")
         public void testSplitedExceptionTable() throws Exception {
             String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/bytecodeText/inline/splitedExceptionTable.kt");
+            doTest(fileName);
+        }
+    }
+
+    @TestMetadata("compiler/testData/codegen/bytecodeText/jvmOverloads")
+    @TestDataPath("$PROJECT_ROOT")
+    @RunWith(JUnit3RunnerWithInners.class)
+    public static class JvmOverloads extends AbstractBytecodeTextTest {
+        public void testAllFilesPresentInJvmOverloads() throws Exception {
+            JetTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/bytecodeText/jvmOverloads"), Pattern.compile("^(.+)\\.kt$"), true);
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/bytecodeText/jvmOverloads/simple.kt");
             doTest(fileName);
         }
     }

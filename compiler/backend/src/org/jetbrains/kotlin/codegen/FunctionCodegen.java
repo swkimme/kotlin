@@ -113,6 +113,8 @@ public class FunctionCodegen {
 
         generateDefaultIfNeeded(owner.intoFunction(functionDescriptor), functionDescriptor, owner.getContextKind(),
                                 DefaultParameterValueLoader.DEFAULT, function);
+
+        new DefaultParameterValueSubstitutor(state).generateOverloadsIfNeeded(functionDescriptor, owner, v);
     }
 
     public void generateMethod(

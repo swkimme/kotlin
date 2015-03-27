@@ -17,28 +17,64 @@
 package org.jetbrains.kotlin.codegen
 
 import org.jetbrains.kotlin.codegen.binding.CodegenBinding
+import org.jetbrains.kotlin.codegen.context.CodegenContext
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.codegen.state.JetTypeMapper
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.descriptors.Visibilities
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.JetClass
 import org.jetbrains.kotlin.psi.JetClassOrObject
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.OtherOrigin
-import org.jetbrains.org.objectweb.asm.Type
 import org.jetbrains.org.objectweb.asm.commons.InstructionAdapter
 
 public class DefaultParameterValueSubstitutor(val state: GenerationState) {
-    fun generateDefaultConstructorIfNeeded(method: CallableMethod,
-                                           constructorDescriptor: ConstructorDescriptor,
+    fun generateDefaultConstructorIfNeeded(constructorDescriptor: ConstructorDescriptor,
                                            classBuilder: ClassBuilder,
                                            classOrObject: JetClassOrObject) {
+        val method = state.getTypeMapper().mapToCallableMethod(constructorDescriptor)
         if (!isEmptyConstructorNeeded(constructorDescriptor, classOrObject)) {
             return
         }
 
-        val flags = AsmUtil.getVisibilityAccessFlag(constructorDescriptor)
-        val mv = classBuilder.newMethod(OtherOrigin(constructorDescriptor), flags, "<init>", "()V", null,
-                                        FunctionCodegen.getThrownExceptions(constructorDescriptor, state.getTypeMapper()))
+        generateOverloadWithSubstitutedParameters(method, constructorDescriptor, classBuilder, classOrObject,
+                                                  CodegenContext.STATIC,  // this is used to detect whether the call is in the same module, which is always true here
+                                                  constructorDescriptor.countDefaultParameters())
+    }
+
+    fun generateOverloadsIfNeeded(functionDescriptor: FunctionDescriptor, owner: CodegenContext<*>,
+                                  classBuilder: ClassBuilder) {
+        val overloadsFqName = FqName.fromSegments(listOf("kotlin", "jvm", "overloads"))
+        if (functionDescriptor.getAnnotations().findAnnotation(overloadsFqName) == null) return
+
+        val count = functionDescriptor.countDefaultParameters()
+        val context = owner.intoFunction(functionDescriptor)
+        val method = state.getTypeMapper().mapToCallableMethod(functionDescriptor, false, context)
+
+        for (i in 1..count) {
+            generateOverloadWithSubstitutedParameters(method, functionDescriptor, classBuilder, null, context, i)
+        }
+    }
+
+    private fun FunctionDescriptor.countDefaultParameters() =
+        getValueParameters().count { it.hasDefaultValue() }
+
+    fun generateOverloadWithSubstitutedParameters(method: CallableMethod,
+                                                  functionDescriptor: FunctionDescriptor,
+                                                  classBuilder: ClassBuilder,
+                                                  classOrObject: JetClassOrObject?,
+                                                  context: CodegenContext<*>,
+                                                  substituteCount: Int) {
+        val flags = AsmUtil.getVisibilityAccessFlag(functionDescriptor)
+        val remainingParameters = getRemainingParameters(functionDescriptor.getOriginal(), substituteCount)
+        val signature = state.getTypeMapper().mapSignature(functionDescriptor, OwnerKind.IMPLEMENTATION,
+                                                           remainingParameters)
+        val mv = classBuilder.newMethod(OtherOrigin(functionDescriptor), flags,
+                                        signature.getAsmMethod().getName(),
+                                        signature.getAsmMethod().getDescriptor(), null,
+                                        FunctionCodegen.getThrownExceptions(functionDescriptor, state.getTypeMapper()))
 
         if (state.getClassBuilderMode() == ClassBuilderMode.LIGHT_CLASSES) return
 
@@ -50,7 +86,7 @@ public class DefaultParameterValueSubstitutor(val state: GenerationState) {
 
         var mask = 0
         val masks = arrayListOf<Int>()
-        for (parameterDescriptor in constructorDescriptor.getValueParameters()) {
+        for (parameterDescriptor in functionDescriptor.getValueParameters()) {
             val paramType = state.getTypeMapper().mapType(parameterDescriptor.getType())
             AsmUtil.pushDefaultValueOnStack(paramType, v)
             val i = parameterDescriptor.getIndex()
@@ -66,12 +102,24 @@ public class DefaultParameterValueSubstitutor(val state: GenerationState) {
         }
 
         // constructors with default arguments has last synthetic argument of specific type
-        v.aconst(null)
+        if (functionDescriptor is ConstructorDescriptor) {
+            v.aconst(null)
+        }
 
-        val desc = JetTypeMapper.getDefaultDescriptor(method.getAsmMethod(), false)
-        v.invokespecial(methodOwner.getInternalName(), "<init>", desc, false)
-        v.areturn(Type.VOID_TYPE)
+        val defaultMethod = state.getTypeMapper().mapDefaultMethod(functionDescriptor, OwnerKind.IMPLEMENTATION, context)
+        if (functionDescriptor is ConstructorDescriptor) {
+            v.invokespecial(methodOwner.getInternalName(), defaultMethod.getName(), defaultMethod.getDescriptor(), false)
+        } else {
+            v.invokestatic(methodOwner.getInternalName(), defaultMethod.getName(), defaultMethod.getDescriptor(), false)
+        }
+        v.areturn(signature.getReturnType())
         FunctionCodegen.endVisit(mv, "default constructor for " + methodOwner.getInternalName(), classOrObject)
+    }
+
+    private fun getRemainingParameters(functionDescriptor: FunctionDescriptor,
+                                       substituteCount: Int): List<ValueParameterDescriptor> {
+        var remainingCount = functionDescriptor.countDefaultParameters() - substituteCount
+        return functionDescriptor.getValueParameters().filter { !it.declaresDefaultValue() || --remainingCount >= 0 }
     }
 
     private fun isEmptyConstructorNeeded(constructorDescriptor: ConstructorDescriptor, classOrObject: JetClassOrObject): Boolean {
