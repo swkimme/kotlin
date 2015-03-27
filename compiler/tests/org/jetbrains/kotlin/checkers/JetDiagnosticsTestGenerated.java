@@ -11103,24 +11103,6 @@ public class JetDiagnosticsTestGenerated extends AbstractJetDiagnosticsTest {
                     doTest(fileName);
                 }
 
-                @TestMetadata("kt3175a.kt")
-                public void testKt3175a() throws Exception {
-                    String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/smartCasts/varnotnull/kt3175a.kt");
-                    doTest(fileName);
-                }
-
-                @TestMetadata("kt3175b.kt")
-                public void testKt3175b() throws Exception {
-                    String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/smartCasts/varnotnull/kt3175b.kt");
-                    doTest(fileName);
-                }
-
-                @TestMetadata("kt3175c.kt")
-                public void testKt3175c() throws Exception {
-                    String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/smartCasts/varnotnull/kt3175c.kt");
-                    doTest(fileName);
-                }
-
                 @TestMetadata("kt3993.kt")
                 public void testKt3993() throws Exception {
                     String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/smartCasts/varnotnull/kt3993.kt");
@@ -11133,21 +11115,9 @@ public class JetDiagnosticsTestGenerated extends AbstractJetDiagnosticsTest {
                     doTest(fileName);
                 }
 
-                @TestMetadata("kt5840.kt")
-                public void testKt5840() throws Exception {
-                    String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/smartCasts/varnotnull/kt5840.kt");
-                    doTest(fileName);
-                }
-
                 @TestMetadata("kt5907.kt")
                 public void testKt5907() throws Exception {
                     String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/smartCasts/varnotnull/kt5907.kt");
-                    doTest(fileName);
-                }
-
-                @TestMetadata("kt6819.kt")
-                public void testKt6819() throws Exception {
-                    String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/smartCasts/varnotnull/kt6819.kt");
                     doTest(fileName);
                 }
             }
