@@ -44,8 +44,8 @@ public abstract class TranslationResult protected (public val diagnostics: Diagn
             private val config: Config,
             private val files: List<JetFile>,
             public val program: JsProgram,
-            private val moduleDescriptor: ModuleDescriptor,
-            diagnostics: Diagnostics
+            diagnostics: Diagnostics,
+            private val moduleDescriptor: ModuleDescriptor
     ) : TranslationResult(diagnostics) {
         public fun getCode(): String = getCode(TextOutputImpl(), sourceMapBuilder = null)
 
@@ -73,7 +73,7 @@ public abstract class TranslationResult protected (public val diagnostics: Diagn
 
             config.getMetaInfo()?.let {
                 val metaFile = File(it)
-                val metaFileContent = KotlinJavaScriptSerializer().serializeToString(config.getModuleId(), moduleDescriptor)
+                val metaFileContent = KotlinJavaScriptSerializer.metadataAsString(config.getModuleId(), moduleDescriptor)
                 val sourceFilesForMetaFile = ArrayList<File>(sourceFiles)
                 val jsMetaFile = SimpleOutputFile(sourceFilesForMetaFile, metaFile.getName(), metaFileContent)
                 outputFiles.add(jsMetaFile)
