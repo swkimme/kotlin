@@ -17,6 +17,7 @@
 package org.jetbrains.kotlin.resolve.calls.smartcasts;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.JetNodeTypes;
@@ -190,8 +191,10 @@ public class DataFlowValueFactory {
         DeclarationDescriptor declarationDescriptor = bindingContext.get(REFERENCE_TARGET, simpleNameExpression);
         if (declarationDescriptor instanceof VariableDescriptor) {
             ResolvedCall<?> resolvedCall = CallUtilPackage.getResolvedCall(simpleNameExpression, bindingContext);
-            PackageFragmentDescriptor usagePackageDescriptor = bindingContext.get(FILE_TO_PACKAGE_FRAGMENT,
-                                                                                  simpleNameExpression.getContainingJetFile());
+            // We cannot call .getContainingJetFile because it can throw assertion error
+            PsiFile psiFile = simpleNameExpression.getContainingFile();
+            PackageFragmentDescriptor usagePackageDescriptor = psiFile instanceof JetFile ?
+                                                               bindingContext.get(FILE_TO_PACKAGE_FRAGMENT, (JetFile)psiFile) : null;
             // todo uncomment assert
             // KT-4113
             // for now it fails for resolving 'invoke' convention, return it after 'invoke' algorithm changes
