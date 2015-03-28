@@ -23,8 +23,10 @@ import org.jetbrains.jps.model.java.JpsJavaModuleType
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
+import org.jetbrains.kotlin.utils.KotlinJavascriptMetadataUtils
 import java.io.File
 import java.util.ArrayList
+import kotlin.platform.platformStatic
 
 class JpsJsModuleUtils private() {
     companion object {
@@ -59,8 +61,10 @@ class JpsJsModuleUtils private() {
             })
         }
 
-        fun getOutputFile(outputDir: File, moduleName: String) = File(outputDir, "$moduleName.js")
+        platformStatic
+        fun getOutputFile(outputDir: File, moduleName: String) = File(outputDir, "$moduleName" + KotlinJavascriptMetadataUtils.JS_EXT)
 
-        fun getOutputMetaFile(outputDir: File, moduleName: String) = File(outputDir, "$moduleName.meta.js")
+        platformStatic
+        fun getOutputMetaFile(outputDir: File, moduleName: String) = File(outputDir, "$moduleName" + KotlinJavascriptMetadataUtils.META_JS_SUFFIX)
     }
 }
