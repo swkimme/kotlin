@@ -17,7 +17,6 @@
 package org.jetbrains.kotlin.js.test;
 
 import com.google.common.collect.Lists;
-import com.google.dart.compiler.backend.js.ast.JsNode;
 import com.google.dart.compiler.backend.js.ast.JsProgram;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -27,7 +26,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.backend.common.output.OutputFileCollection;
@@ -35,18 +33,17 @@ import org.jetbrains.kotlin.cli.common.output.outputUtils.OutputUtilsPackage;
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles;
 import org.jetbrains.kotlin.cli.jvm.compiler.JetCoreEnvironment;
 import org.jetbrains.kotlin.config.CompilerConfiguration;
+import org.jetbrains.kotlin.idea.JetFileType;
 import org.jetbrains.kotlin.js.JavaScript;
 import org.jetbrains.kotlin.js.config.Config;
 import org.jetbrains.kotlin.js.config.EcmaVersion;
 import org.jetbrains.kotlin.js.config.LibrarySourcesConfig;
-import org.jetbrains.kotlin.js.config.LibrarySourcesConfigWithCaching;
 import org.jetbrains.kotlin.js.facade.K2JSTranslator;
 import org.jetbrains.kotlin.js.facade.MainCallParameters;
 import org.jetbrains.kotlin.js.facade.TranslationResult;
 import org.jetbrains.kotlin.js.test.rhino.RhinoResultChecker;
 import org.jetbrains.kotlin.js.test.utils.JsTestUtils;
 import org.jetbrains.kotlin.js.translate.context.Namer;
-import org.jetbrains.kotlin.idea.JetFileType;
 import org.jetbrains.kotlin.psi.JetFile;
 import org.jetbrains.kotlin.psi.JetPsiFactory;
 import org.jetbrains.kotlin.resolve.lazy.KotlinTestWithEnvironment;
@@ -285,21 +282,26 @@ public abstract class BasicTest extends KotlinTestWithEnvironment {
 
     @NotNull
     private Config createConfig(@NotNull Project project, @NotNull String moduleId, @NotNull EcmaVersion ecmaVersion, @Nullable List<String> libraries) {
-        Config config;
         if (libraries == null) {
-            config = new LibrarySourcesConfigWithCaching(project, moduleId, ecmaVersion, shouldGenerateSourceMap(), IS_INLINE_ENABLED, shouldBeTranslateAsUnitTestClass());
+            libraries = LibrarySourcesConfig.JS_STDLIB;
         }
         else {
-            config = new LibrarySourcesConfig(project, moduleId, librariesWithJsStdlib(libraries), ecmaVersion, shouldGenerateSourceMap(), IS_INLINE_ENABLED);
+            libraries = librariesWithJsStdlib(libraries);
         }
-        config.setMetaFileOutputPath(getMetaFileOutputPath(moduleId));
-        return config;
+
+        return new LibrarySourcesConfig.Builder(project, moduleId, libraries)
+                .ecmaVersion(ecmaVersion)
+                .sourceMap(shouldGenerateSourceMap())
+                .inlineEnabled(IS_INLINE_ENABLED)
+                .isUnitTestConfig(shouldBeTranslateAsUnitTestClass())
+                .metaFileOutputPath(getMetaFileOutputPath(moduleId))
+                .build();
     }
 
     @NotNull
     private static List<String> librariesWithJsStdlib(@NotNull List<String> libraries) {
         List<String> result = new ArrayList<String>(libraries);
-        result.addAll(0, LibrarySourcesConfigWithCaching.JS_STDLIB);
+        result.addAll(0, LibrarySourcesConfig.JS_STDLIB);
         return result;
     }
 

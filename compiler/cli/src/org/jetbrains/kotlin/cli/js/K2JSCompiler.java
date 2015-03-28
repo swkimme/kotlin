@@ -240,9 +240,12 @@ public class K2JSCompiler extends CLICompiler<K2JSCompilerArguments> {
             ContainerUtil.addAllNotNull(libraryFiles, arguments.libraryFiles);
         }
 
-        Config config = new LibrarySourcesConfig(project, moduleId, libraryFiles, ecmaVersion, arguments.sourceMap, inlineEnabled);
-        config.setMetaFileOutputPath(arguments.metaInfo);
-        return config;
+        return new LibrarySourcesConfig.Builder(project, moduleId, libraryFiles)
+                .ecmaVersion(ecmaVersion)
+                .sourceMap(arguments.sourceMap)
+                .inlineEnabled(inlineEnabled)
+                .metaFileOutputPath(arguments.metaInfo)
+                .build();
     }
 
     public static MainCallParameters createMainCallParameters(String main) {
